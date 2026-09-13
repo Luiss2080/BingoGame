@@ -22,14 +22,19 @@ export class GruposController {
   @Get()
   async listar() {
     const grupos = await this.prisma.grupo.findMany({
-      where: { activo: true },
-      include: { _count: { select: { usuarios: { where: { activo: true } } } } },
       orderBy: { nombre: 'asc' },
+      include: {
+        _count: { select: { usuarios: true, cartones: true } },
+      },
     });
-    return grupos.map((g) => ({
+
+    return grupos.map((g: any) => ({
       id: g.id,
       nombre: g.nombre,
-      total_usuarios: g._count.usuarios,
+      activo: g.activo,
+      fecha_creacion: g.fechaCreacion,
+      usuarios_count: g._count.usuarios,
+      cartones_count: g._count.cartones,
     }));
   }
 

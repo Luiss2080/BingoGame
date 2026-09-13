@@ -69,7 +69,7 @@ export class PrismaCartonRepository implements ICartonRepository {
     if (filters?.grupoId) where.grupoId = filters.grupoId;
 
     const cartones = await this.prisma.carton.findMany({ where });
-    return cartones.map((c) => this.mapToDomain(c));
+    return cartones.map((c: PrismaCarton) => this.mapToDomain(c));
   }
 
   async save(carton: Carton): Promise<Carton> {

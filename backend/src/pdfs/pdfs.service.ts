@@ -133,7 +133,7 @@ export class PdfsService {
       orderBy: { fechaProcesado: 'desc' },
       include: { _count: { select: { cartones: true } } },
     });
-    return pdfs.map((p) => ({ ...pdfToDto(p), total_cartones: p._count.cartones }));
+    return pdfs.map((p: any) => ({ ...pdfToDto(p), total_cartones: p._count.cartones }));
   }
 
   async estado(id: number) {

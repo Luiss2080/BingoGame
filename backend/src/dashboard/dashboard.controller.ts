@@ -1,105 +1,108 @@
 import { Controller, Get } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { CurrentUser, AuthUser } from '../auth/decorators';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser, CurrentUser } from '../auth/decorators';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  async dashboard(@CurrentUser() user: AuthUser) {
-    const esAdmin = user.rol === 'admin';
+  async getDashboardStats(@CurrentUser() user: AuthUser) {
+    const admin = user.rol === 'admin';
+    const whereGrupo = !admin && user.grupoId ? { grupoId: user.grupoId } : {};
 
-    let disponibles: number;
-    let vendidos: number;
-    let reservados: number;
-    let ingresos: number;
-    let totalPdfs: number;
-    let ultimosPdfs;
+    // 1. Estadísticas de Cartones
+    const totalCartones = await this.prisma.carton.count({ where: whereGrupo });
+    const disponibles = await this.prisma.carton.count({
+      where: { ...whereGrupo, estado: 'disponible' },
+    });
+    const vendidos = await this.prisma.carton.count({
+      where: { ...whereGrupo, estado: 'vendido' },
+    });
+    const reservados = await this.prisma.carton.count({
+      where: { ...whereGrupo, estado: 'reservado' },
+    });
 
-    if (esAdmin) {
-      [disponibles, vendidos, reservados, totalPdfs] = await Promise.all([
-        this.prisma.carton.count({ where: { estado: 'disponible' } }),
-        this.prisma.carton.count({ where: { estado: 'vendido' } }),
-        this.prisma.carton.count({ where: { estado: 'reservado' } }),
-        this.prisma.pdfProcesado.count(),
-      ]);
-      const suma = await this.prisma.carton.aggregate({
+    let totalRecaudado = 0;
+    if (admin) {
+      const agg = await this.prisma.carton.aggregate({
         _sum: { precio: true },
         where: { estado: 'vendido' },
       });
-      ingresos = Number(suma._sum.precio ?? 0);
-      ultimosPdfs = await this.prisma.pdfProcesado.findMany({
-        orderBy: { fechaProcesado: 'desc' },
-        take: 5,
-      });
-    } else {
-      const usuario = await this.prisma.user.findUnique({
-        where: { id: user.id },
-        select: { grupoId: true },
-      });
-      const grupoId = usuario?.grupoId ?? null;
-
-      // Disponibles globales: mismo criterio que el listado (un número cuenta
-      // si ningún cartón de ese número está reservado/vendido)
-      const filas = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
-        WITH disp AS (
-          SELECT c.id, ROW_NUMBER() OVER (
-            PARTITION BY c.numero
-            ORDER BY
-              CASE WHEN ${grupoId}::int IS NOT NULL
-                    AND c.grupo_id = ${grupoId}::int THEN 0 ELSE 1 END,
-              c.id
-          ) AS rn
-          FROM cartones c
-          WHERE c.estado = 'disponible'
-            AND NOT EXISTS (
-              SELECT 1 FROM cartones o
-              WHERE o.numero = c.numero AND o.estado IN ('reservado', 'vendido')
-            )
-        )
-        SELECT COUNT(*) AS total FROM disp WHERE rn = 1`);
-      disponibles = Number(filas[0]?.total ?? 0);
-
-      [reservados, vendidos, totalPdfs] = await Promise.all([
-        this.prisma.carton.count({
-          where: { vendedorId: user.id, estado: 'reservado' },
-        }),
-        this.prisma.carton.count({
-          where: { vendedorId: user.id, estado: 'vendido' },
-        }),
-        this.prisma.pdfProcesado.count({ where: { subidoPor: user.id } }),
-      ]);
-      const suma = await this.prisma.carton.aggregate({
-        _sum: { precio: true },
-        where: { vendedorId: user.id, estado: 'vendido' },
-      });
-      ingresos = Number(suma._sum.precio ?? 0);
-      ultimosPdfs = await this.prisma.pdfProcesado.findMany({
-        where: { subidoPor: user.id },
-        orderBy: { fechaProcesado: 'desc' },
-        take: 5,
-      });
+      totalRecaudado = Number(agg._sum.precio || 0);
     }
 
+    let disponiblesDispersos = 0;
+    if (admin) {
+      const filas = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
+        WITH disp AS (
+          SELECT id, numero, 
+                 ROW_NUMBER() OVER(PARTITION BY numero ORDER BY id) as rn
+          FROM cartones
+          WHERE estado = 'disponible'
+        )
+        SELECT COUNT(*) AS total FROM disp WHERE rn = 1`);
+      disponiblesDispersos = Number(filas[0]?.total || 0);
+    } else {
+      const filas = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
+        WITH disp AS (
+          SELECT id, numero, 
+                 ROW_NUMBER() OVER(PARTITION BY numero ORDER BY id) as rn
+          FROM cartones
+          WHERE estado = 'disponible' AND grupo_id = ${user.grupoId}
+        )
+        SELECT COUNT(*) AS total FROM disp WHERE rn = 1`);
+      disponiblesDispersos = Number(filas[0]?.total || 0);
+    }
+
+    // 2. Ranking de Vendedores
+    let ranking = await this.prisma.carton.groupBy({
+      by: ['vendedorId'],
+      _count: { id: true },
+      _sum: { precio: true },
+      where: { ...whereGrupo, estado: 'vendido', vendedorId: { not: null } },
+      orderBy: { _count: { id: 'desc' } },
+      take: 5,
+    });
+
+    const usuariosIds = ranking.map((r) => r.vendedorId!).filter(Boolean);
+    const usuarios = await this.prisma.user.findMany({
+      where: { id: { in: usuariosIds } },
+      select: { id: true, username: true },
+    });
+    const mapUsuarios = new Map(usuarios.map((u) => [u.id, u.username]));
+
+    const ranking_vendedores = ranking.map((r) => ({
+      username: mapUsuarios.get(r.vendedorId!) || 'Desconocido',
+      vendidos: r._count.id,
+      recaudado: Number(r._sum.precio || 0),
+    }));
+
+    // 3. Resumen de PDFs
+    const ultimosPdfs = await this.prisma.pdfProcesado.findMany({
+      take: 5,
+      orderBy: { fechaProcesado: 'desc' },
+      select: { id: true, nombreArchivo: true, totalPaginas: true, estado: true, fechaProcesado: true },
+    });
+
     return {
-      total_pdfs: totalPdfs,
-      total_cartones: disponibles + reservados + vendidos,
-      disponibles,
-      vendidos,
-      reservados,
-      ingresos,
-      ultimos_pdfs: ultimosPdfs.map((p) => ({
+      cartones: {
+        total: totalCartones,
+        disponibles,
+        disponibles_unicos: disponiblesDispersos,
+        vendidos,
+        reservados,
+      },
+      financiero: admin ? { total_recaudado: totalRecaudado } : undefined,
+      ranking_vendedores,
+      ultimos_pdfs: ultimosPdfs.map((p: any) => ({
         id: p.id,
-        nombre_archivo: p.nombreArchivo,
-        fecha_procesado: p.fechaProcesado.toISOString(),
-        total_paginas: p.totalPaginas,
-        paginas_ok: p.paginasOk,
-        paginas_error: p.paginasError,
+        nombre: p.nombreArchivo,
         estado: p.estado,
+        fecha: p.fechaProcesado,
+        paginas: p.totalPaginas,
       })),
-      es_admin: esAdmin,
     };
   }
 }
