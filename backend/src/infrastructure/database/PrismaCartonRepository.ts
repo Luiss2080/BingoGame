@@ -91,4 +91,9 @@ export class PrismaCartonRepository implements ICartonRepository {
     });
     return this.mapToDomain(updated);
   }
+  async delete(id: number): Promise<void> {
+    await this.prisma.carton.delete({
+      where: { id },
+    });
+  }
 }
