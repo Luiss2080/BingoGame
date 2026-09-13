@@ -1,10 +1,11 @@
-import { Controller, Inject, Post } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { rm } from 'node:fs/promises';
 import type { RegenerateImagesJob } from '@bingo/common';
+import { PDF_QUEUE } from '@bingo/common';
 import { AdminOnly } from '../auth/decorators';
 import { PrismaService } from '../prisma/prisma.service';
-import { PDF_QUEUE_TOKEN } from '../queue/queue.module';
 import { StorageService } from '../storage/storage.service';
 
 @Controller('admin')
@@ -13,7 +14,7 @@ export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
-    @Inject(PDF_QUEUE_TOKEN) private readonly queue: Queue,
+    @InjectQueue(PDF_QUEUE) private readonly queue: Queue,
   ) {}
 
   /** Borra todos los cartones y PDFs (registros + archivos). Conserva usuarios, grupos y banners. */

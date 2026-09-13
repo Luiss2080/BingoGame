@@ -1,5 +1,5 @@
-import { Carton } from '../entities/Carton';
-import { ICartonRepository } from '../repositories/ICartonRepository';
+import { Carton } from '../../domain/entities/Carton';
+import { ICartonRepository } from '../../domain/repositories/ICartonRepository';
 
 export interface LiberarCartonRequest {
   id: number;

@@ -1,5 +1,5 @@
-import { EstadoCarton } from '../entities/Carton';
-import { ICartonRepository } from '../repositories/ICartonRepository';
+import { EstadoCarton } from '../../domain/entities/Carton';
+import { ICartonRepository } from '../../domain/repositories/ICartonRepository';
 
 export interface EliminarCartonRequest {
   id: number;
