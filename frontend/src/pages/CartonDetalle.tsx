@@ -38,14 +38,32 @@ export default function CartonDetalle() {
   };
 
   const accion = useMutation({
-    mutationFn: async ({ ruta, body }: { ruta: string; body?: unknown }) =>
+    mutationFn: async ({ ruta, body }: { ruta: string; body?: any }) =>
       (await api.post(`/cartones/${id}/${ruta}`, body ?? {})).data,
-    onSuccess: () => {
+    onMutate: async ({ ruta, body }) => {
+      // Optimistic UI Update
+      await qc.cancelQueries({ queryKey: ['carton', id] });
+      const previousCarton = qc.getQueryData<Carton>(['carton', id]);
+      if (previousCarton) {
+        qc.setQueryData<Carton>(['carton', id], {
+          ...previousCarton,
+          estado: ruta === 'vender' ? 'vendido' : ruta === 'reservar' ? 'reservado' : 'disponible',
+          comprador: body?.comprador || previousCarton.comprador,
+          precio: body?.precio || previousCarton.precio,
+        });
+      }
+      return { previousCarton };
+    },
+    onError: (e, _, context) => {
+      if (context?.previousCarton) {
+        qc.setQueryData(['carton', id], context.previousCarton);
+      }
+      setError(mensajeError(e));
+    },
+    onSettled: () => {
       invalidar();
       setDialogo(null);
-      setError('');
     },
-    onError: (e) => setError(mensajeError(e)),
   });
 
   const eliminar = useMutation({

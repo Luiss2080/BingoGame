@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { api } from '../api/client';
 import { Pantalla } from '../components/Layout';
 
@@ -118,31 +119,39 @@ export default function Cartones() {
         <Vacio mensaje={qDebounced ? 'Sin resultados' : 'No hay cartones'} />
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {cartones.map((c) => (
-            <Link
+          {cartones.map((c, i) => (
+            <motion.div
               key={c.id}
-              to={`/cartones/${c.id}`}
-              className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-black/20 transition active:border-brand/60"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="relative aspect-[4/3] bg-bg">
-                <img
-                  src={`/api/cartones/${c.id}/imagen?v=${c.estado}`}
-                  alt={`Cartón ${c.numero}`}
-                  loading="lazy"
-                  className="h-full w-full object-cover object-top"
-                />
-                <span className="absolute right-2 top-2">
-                  <EstadoBadge estado={c.estado} />
-                </span>
-              </div>
-              <div className="p-3">
-                <p className="truncate text-lg font-bold text-white">#{c.numero}</p>
-                <p className="truncate text-xs text-muted">
-                  {c.comprador || 'Sin asignar'}
-                  {c.precio != null && c.precio > 0 ? ` · ${dinero(c.precio)}` : ''}
-                </p>
-              </div>
-            </Link>
+              <Link
+                to={`/cartones/${c.id}`}
+                className="block overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-black/20 transition active:border-brand/60"
+              >
+                <div className="relative aspect-[4/3] bg-bg">
+                  <img
+                    src={`/api/cartones/${c.id}/imagen?v=${c.estado}`}
+                    alt={`Cartón ${c.numero}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover object-top"
+                  />
+                  <span className="absolute right-2 top-2">
+                    <EstadoBadge estado={c.estado} />
+                  </span>
+                </div>
+                <div className="p-3">
+                  <p className="truncate text-lg font-bold text-white">#{c.numero}</p>
+                  <p className="truncate text-xs text-muted">
+                    {c.comprador || 'Sin asignar'}
+                    {c.precio != null && c.precio > 0 ? ` · ${dinero(c.precio)}` : ''}
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
       )}
