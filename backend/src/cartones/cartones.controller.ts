@@ -33,6 +33,8 @@ import { CartonesService } from './cartones.service';
 import { GetCartonUseCase } from '../core/application/use-cases/GetCartonUseCase';
 import { ReservarCartonUseCase } from '../core/application/use-cases/ReservarCartonUseCase';
 import { VenderCartonUseCase } from '../core/application/use-cases/VenderCartonUseCase';
+import { LiberarCartonUseCase } from '../core/application/use-cases/LiberarCartonUseCase';
+import { EliminarCartonUseCase } from '../core/application/use-cases/EliminarCartonUseCase';
 
 @Controller()
 export class CartonesController {
@@ -41,6 +43,8 @@ export class CartonesController {
     private readonly getCartonUseCase: GetCartonUseCase,
     private readonly reservarCartonUseCase: ReservarCartonUseCase,
     private readonly venderCartonUseCase: VenderCartonUseCase,
+    private readonly liberarCartonUseCase: LiberarCartonUseCase,
+    private readonly eliminarCartonUseCase: EliminarCartonUseCase,
   ) {}
 
   @Get('cartones')
@@ -129,15 +133,22 @@ export class CartonesController {
 
   @Post('cartones/:id/liberar')
   @RequierePermiso('liberar')
-  liberar(@Param('id', ParseIntPipe) id: number) {
-    return this.cartones.liberar(id);
+  async liberar(@Param('id', ParseIntPipe) id: number) {
+    try {
+      const carton = await this.liberarCartonUseCase.execute({ id });
+      return carton;
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Delete('cartones/:id')
-  eliminar(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.cartones.eliminar(id, user);
+  async eliminar(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await this.eliminarCartonUseCase.execute({ id });
+      return { ok: true, message: 'Cartón eliminado con éxito' };
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
   }
 }

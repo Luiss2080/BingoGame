@@ -5,6 +5,8 @@ import { PrismaCartonRepository } from '../infrastructure/database/PrismaCartonR
 import { GetCartonUseCase } from '../core/application/use-cases/GetCartonUseCase';
 import { ReservarCartonUseCase } from '../core/application/use-cases/ReservarCartonUseCase';
 import { VenderCartonUseCase } from '../core/application/use-cases/VenderCartonUseCase';
+import { LiberarCartonUseCase } from '../core/application/use-cases/LiberarCartonUseCase';
+import { EliminarCartonUseCase } from '../core/application/use-cases/EliminarCartonUseCase';
 import { ICartonRepositoryToken } from '../core/domain/repositories/ICartonRepository';
 
 @Module({
