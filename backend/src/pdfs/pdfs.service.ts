@@ -53,7 +53,7 @@ export class PdfsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
-    @InjectQueue(PDF_QUEUE) private readonly pdfQueue: Queue,
+    @InjectQueue(PDF_QUEUE) private readonly queue: Queue,
   ) {}
 
   /**

@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { PDF_QUEUE, PdfProcesadoDto } from '@bingo/common';
+import { PDF_QUEUE } from '@bingo/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { fromPath } from 'pdf2pic';
 import * as path from 'path';
@@ -14,7 +14,7 @@ export class PdfProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<PdfProcesadoDto, void, string>): Promise<void> {
+  async process(job: Job<any, void, string>): Promise<void> {
     this.logger.log(`Procesando trabajo ${job.id} para PDF ID: ${job.data.id} con Worker Node Nativo`);
     const pdfPath = job.data.ruta_archivo;
     
@@ -37,7 +37,7 @@ export class PdfProcessor extends WorkerHost {
       // 2. Marcar como completado en DB
       await this.prisma.pdfProcesado.update({
         where: { id: job.data.id },
-        data: { estado: 'completado', fechaCompletado: new Date() },
+        data: { estado: 'completado' },
       });
 
       this.logger.log(`PDF procesado y guardado correctamente por Node.js`);
