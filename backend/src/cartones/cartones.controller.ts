@@ -31,12 +31,16 @@ import {
 import { CartonesService } from './cartones.service';
 
 import { GetCartonUseCase } from '../core/application/use-cases/GetCartonUseCase';
+import { ReservarCartonUseCase } from '../core/application/use-cases/ReservarCartonUseCase';
+import { VenderCartonUseCase } from '../core/application/use-cases/VenderCartonUseCase';
 
 @Controller()
 export class CartonesController {
   constructor(
     private readonly cartones: CartonesService,
     private readonly getCartonUseCase: GetCartonUseCase,
+    private readonly reservarCartonUseCase: ReservarCartonUseCase,
+    private readonly venderCartonUseCase: VenderCartonUseCase,
   ) {}
 
   @Get('cartones')
@@ -82,22 +86,45 @@ export class CartonesController {
 
   @Post('cartones/:id/vender')
   @RequierePermiso('vender')
-  vender(
+  async vender(
     @Param('id', ParseIntPipe) id: number,
     @Body(new ZodPipe(venderSchema)) dto: VenderDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.cartones.vender(id, dto, user);
+    try {
+      if (!user.grupoId) throw new BadRequestException('Usuario no tiene grupo asignado');
+      const carton = await this.venderCartonUseCase.execute({
+        id,
+        vendedorId: user.id,
+        grupoId: user.grupoId,
+        comprador: dto.comprador,
+        precio: dto.precio,
+        telefono: dto.telefono,
+      });
+      return carton;
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Post('cartones/:id/reservar')
   @RequierePermiso('reservar')
-  reservar(
+  async reservar(
     @Param('id', ParseIntPipe) id: number,
     @Body(new ZodPipe(reservarSchema)) dto: ReservarDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.cartones.reservar(id, dto, user);
+    try {
+      if (!user.grupoId) throw new BadRequestException('Usuario no tiene grupo asignado');
+      const carton = await this.reservarCartonUseCase.execute({
+        id,
+        vendedorId: user.id,
+        grupoId: user.grupoId,
+      });
+      return carton;
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Post('cartones/:id/liberar')
