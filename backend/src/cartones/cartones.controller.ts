@@ -30,9 +30,14 @@ import {
 } from '../auth/decorators';
 import { CartonesService } from './cartones.service';
 
+import { GetCartonUseCase } from '../core/application/use-cases/GetCartonUseCase';
+
 @Controller()
 export class CartonesController {
-  constructor(private readonly cartones: CartonesService) {}
+  constructor(
+    private readonly cartones: CartonesService,
+    private readonly getCartonUseCase: GetCartonUseCase,
+  ) {}
 
   @Get('cartones')
   listar(
@@ -50,8 +55,16 @@ export class CartonesController {
   }
 
   @Get('cartones/:id')
-  detalle(@Param('id', ParseIntPipe) id: number) {
-    return this.cartones.detalle(id);
+  async detalle(@Param('id', ParseIntPipe) id: number) {
+    try {
+      const carton = await this.getCartonUseCase.execute({ id });
+      return carton;
+    } catch (e: any) {
+      if (e.message === 'Cartón no encontrado') {
+        throw new NotFoundException('Cartón no encontrado');
+      }
+      throw new BadRequestException(e.message);
+    }
   }
 
   /**
