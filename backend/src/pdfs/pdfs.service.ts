@@ -5,12 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Queue } from 'bullmq';
-import type { ProcessPdfJob } from '@bingo/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { ProcessPdfJob, PDF_QUEUE } from '@bingo/common';
 import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { AuthUser } from '../auth/decorators';
 import { PrismaService } from '../prisma/prisma.service';
-import { PDF_QUEUE_TOKEN } from '../queue/queue.module';
 import { StorageService } from '../storage/storage.service';
 
 export interface OpcionesSubida {
