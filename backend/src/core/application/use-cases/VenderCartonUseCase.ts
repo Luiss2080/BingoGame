@@ -6,7 +6,7 @@ export interface VenderCartonRequest {
   vendedorId: number;
   grupoId: number;
   comprador: string;
-  precio: number;
+  precio?: number;
   telefono?: string;
 }
 
@@ -14,7 +14,8 @@ export class VenderCartonUseCase {
   constructor(private readonly cartonRepository: ICartonRepository) {}
 
   async execute(request: VenderCartonRequest): Promise<Carton> {
-    if (request.precio < 0) {
+    const precioFinal = request.precio ?? 0;
+    if (precioFinal < 0) {
       throw new Error('El precio no puede ser negativo');
     }
 
@@ -39,7 +40,7 @@ export class VenderCartonUseCase {
     carton.marcarComoVendido(
       request.vendedorId,
       request.comprador,
-      request.precio,
+      precioFinal,
       request.telefono
     );
 

@@ -9,6 +9,7 @@ export interface AuthUser {
   id: number;
   rol: Rol;
   username: string;
+  grupoId?: number | null;
 }
 
 export const IS_PUBLIC_KEY = 'isPublic';
