@@ -1,0 +1,29 @@
+{
+  "name": "bingo-imperial",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sistema de venta de cartones de bingo — monorepo NestJS + React PWA + worker Python",
+  "scripts": {
+    "dev": "pnpm --parallel --filter backend --filter frontend dev",
+    "dev:api": "pnpm --filter backend dev",
+    "dev:web": "pnpm --filter frontend dev",
+    "build": "pnpm --filter @bingo/common build && pnpm --filter backend build && pnpm --filter frontend build",
+    "migrate": "pnpm --filter backend prisma:migrate",
+    "infra:up": "docker compose -f docker/docker-compose.dev.yml up -d",
+    "infra:down": "docker compose -f docker/docker-compose.dev.yml down"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "argon2",
+      "msgpackr-extract",
+      "prisma",
+      "esbuild"
+    ]
+  },
+  "packageManager": "pnpm@10.34.4"
+}

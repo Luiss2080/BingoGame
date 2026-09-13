@@ -1,0 +1,25 @@
+node_modules/
+dist/
+dev-dist/
+build/
+.env
+*.local
+*.tsbuildinfo
+coverage/
+
+# Python worker
+__pycache__/
+*.pyc
+.venv/
+
+# Datos locales
+data/
+uploads/
+imagenes_generadas/
+*.db
+
+# IDE / SO
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

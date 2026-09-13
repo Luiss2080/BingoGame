@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  admin
+  vendedor
+}
+
+enum EstadoCarton {
+  disponible
+  vendido
+  reservado
+}
+
+enum EstadoPdf {
+  pendiente
+  procesando
+  completado
+  completado_con_errores
+  error
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  username      String         @unique @db.VarChar(80)
+  passwordHash  String         @map("password_hash") @db.VarChar(256)
+  rol           Rol            @default(vendedor)
+  activo        Boolean        @default(true)
+  grupoId       Int?           @map("grupo_id")
+  grupo         Grupo?         @relation(fields: [grupoId], references: [id])
+  fechaCreacion DateTime       @default(now()) @map("fecha_creacion")
+  cartones      Carton[]
+  pdfs          PdfProcesado[]
+
+  @@index([grupoId])
+  @@map("users")
+}
+
+model Grupo {
+  id       Int      @id @default(autoincrement())
+  nombre   String   @unique @db.VarChar(200)
+  activo   Boolean  @default(true)
+  fechaCreacion DateTime @default(now()) @map("fecha_creacion")
+  usuarios User[]
+  cartones Carton[]
+
+  @@map("grupos")
+}
+
+model Carton {
+  id                 Int          @id @default(autoincrement())
+  numero             String       @db.VarChar(20)
+  pdfId              Int          @map("pdf_id")
+  pdf                PdfProcesado @relation(fields: [pdfId], references: [id], onDelete: Cascade)
+  paginaOrigen       Int          @map("pagina_origen")
+  rutaImagen         String       @map("ruta_imagen") @db.VarChar(500)
+  vendedorId         Int?         @map("vendedor_id")
+  vendedor           User?        @relation(fields: [vendedorId], references: [id])
+  grupoId            Int?         @map("grupo_id")
+  grupo              Grupo?       @relation(fields: [grupoId], references: [id])
+  estado             EstadoCarton @default(disponible)
+  comprador          String?      @db.VarChar(200)
+  telefonoComprador  String?      @map("telefono_comprador") @db.VarChar(50)
+  fechaVenta         DateTime?    @map("fecha_venta")
+  precio             Decimal?     @db.Decimal(10, 2)
+  notas              String?
+  fechaCreacion      DateTime     @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime     @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  @@unique([numero, grupoId], name: "uq_carton_numero_grupo")
+  @@index([numero])
+  @@index([estado])
+  @@index([vendedorId])
+  @@index([grupoId])
+  @@index([numero, estado])
+  @@map("cartones")
+}
+
+model PdfProcesado {
+  id              Int       @id @default(autoincrement())
+  nombreArchivo   String    @map("nombre_archivo") @db.VarChar(255)
+  rutaArchivo     String    @map("ruta_archivo") @db.VarChar(500)
+  fechaProcesado  DateTime  @default(now()) @map("fecha_procesado")
+  totalPaginas    Int       @default(0) @map("total_paginas")
+  paginasOk       Int       @default(0) @map("paginas_ok")
+  paginasError    Int       @default(0) @map("paginas_error")
+  carpetaImagenes String?   @map("carpeta_imagenes") @db.VarChar(500)
+  dpi             Int       @default(150)
+  estado          EstadoPdf @default(pendiente)
+  mensajeError    String?   @map("mensaje_error")
+  subidoPor       Int?      @map("subido_por")
+  uploader        User?     @relation(fields: [subidoPor], references: [id])
+  cartones        Carton[]
+
+  @@map("pdfs_procesados")
+}
+
+model Banner {
+  id            Int      @id @default(autoincrement())
+  nombre        String   @db.VarChar(200)
+  rutaImagen    String   @map("ruta_imagen") @db.VarChar(500)
+  activo        Boolean  @default(true)
+  fechaCreacion DateTime @default(now()) @map("fecha_creacion")
+
+  @@map("banners")
+}
+
+model PermisoRol {
+  id         Int     @id @default(autoincrement())
+  rol        String  @db.VarChar(20)
+  permiso    String  @db.VarChar(50)
+  habilitado Boolean @default(true)
+
+  @@unique([rol, permiso], name: "uq_permiso_rol")
+  @@map("permisos_rol")
+}

@@ -1,0 +1,81 @@
+name: bingo
+
+# Compose de producción para Coolify.
+# Coolify inyecta las variables de entorno (ver .env.example); expón SOLO el
+# servicio `frontend` con un dominio — nginx proxya /api al contenedor api.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bingo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-bingo}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-bingo}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+
+  api:
+    build:
+      # Rutas relativas a la raíz del repo: Coolify ejecuta el build con
+      # project-directory = raíz del repo (no la carpeta docker/).
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bingo}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+      DATA_DIR: /data
+      PORT: 3000
+    volumes:
+      - media:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build:
+      context: worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bingo}
+      REDIS_URL: redis://redis:6379
+      DATA_DIR: /data
+    volumes:
+      - media:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    # Coolify enruta el dominio público a este puerto
+    ports:
+      - '80'
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  redisdata:
+  media:

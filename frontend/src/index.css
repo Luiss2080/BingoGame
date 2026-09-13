@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Primario: teal (estilo App_Atletic) */
+  --color-brand: #00bfa5;
+  --color-brand-dark: #008b76;
+
+  /* Superficies navy oscuro */
+  --color-bg: #0d1b2a;
+  --color-surface: #162232;
+  --color-surface2: #1e2e42;
+  --color-line: #2a3d55;
+
+  /* Texto */
+  --color-muted: #8899bb;
+  --color-hint: #4a5f75;
+
+  /* Estados */
+  --color-ok: #4caf50;
+  --color-warn: #ff9800;
+  --color-bad: #ef5350;
+
+  /* Compat: nombres de estado usados en la UI */
+  --color-disponible: #4caf50;
+  --color-vendido: #ef5350;
+  --color-reservado: #ff9800;
+}
+
+html,
+body,
+#root {
+  background-color: var(--color-bg);
+}
+
+body {
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
