@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { api } from '../api/client';
 import { Pantalla } from '../components/Layout';
 
@@ -119,14 +118,11 @@ export default function Cartones() {
         <Vacio mensaje={qDebounced ? 'Sin resultados' : 'No hay cartones'} />
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {cartones.map((c, i) => (
-            <motion.div
+          {cartones.map((c) => (
+            <div
               key={c.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{ contentVisibility: 'auto' }}
             >
               <Link
                 to={`/cartones/${c.id}`}
@@ -151,7 +147,7 @@ export default function Cartones() {
                   </p>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
