@@ -32,7 +32,17 @@ import { ICartonRepositoryToken } from '../core/domain/repositories/ICartonRepos
       useFactory: (repo) => new VenderCartonUseCase(repo),
       inject: [ICartonRepositoryToken],
     },
+    {
+      provide: LiberarCartonUseCase,
+      useFactory: (repo) => new LiberarCartonUseCase(repo),
+      inject: [ICartonRepositoryToken],
+    },
+    {
+      provide: EliminarCartonUseCase,
+      useFactory: (repo) => new EliminarCartonUseCase(repo),
+      inject: [ICartonRepositoryToken],
+    },
   ],
-  exports: [CartonesService, GetCartonUseCase, ReservarCartonUseCase, VenderCartonUseCase, ICartonRepositoryToken],
+  exports: [CartonesService, GetCartonUseCase, ReservarCartonUseCase, VenderCartonUseCase, LiberarCartonUseCase, EliminarCartonUseCase, ICartonRepositoryToken],
 })
 export class CartonesModule {}
