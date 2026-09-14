@@ -1,9 +1,12 @@
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { Injectable, Inject } from '@nestjs/common';
+import { IUserRepository, IUserRepositoryToken } from '../../domain/repositories/IUserRepository';
 import { PermisosService } from '../../../permisos/permisos.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
+@Injectable()
 export class GetPerfilUseCase {
   constructor(
+    @Inject(IUserRepositoryToken)
     private readonly userRepository: IUserRepository,
     private readonly permisosService: PermisosService,
     private readonly prisma: PrismaService,

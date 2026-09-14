@@ -1,12 +1,15 @@
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { IUserRepository, IUserRepositoryToken } from '../../domain/repositories/IUserRepository';
 import { LoginDto } from '@bingo/common';
 import { esHashWerkzeug, verificarHashWerkzeug } from '../../../auth/werkzeug-hash';
 import { PermisosService } from '../../../permisos/permisos.service';
+import { Injectable, Inject } from '@nestjs/common';
 
+@Injectable()
 export class LoginUseCase {
   constructor(
+    @Inject(IUserRepositoryToken)
     private readonly userRepository: IUserRepository,
     private readonly jwtService: JwtService,
     private readonly permisosService: PermisosService,
