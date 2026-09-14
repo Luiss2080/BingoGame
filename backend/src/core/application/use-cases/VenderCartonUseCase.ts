@@ -1,17 +1,21 @@
 import { ICartonRepository } from '../../domain/repositories/ICartonRepository';
 import { Carton, EstadoCarton } from '../../domain/entities/Carton';
+import { RealtimeGateway } from '../../../realtime/realtime.gateway';
 
 export interface VenderCartonRequest {
   id: number;
   vendedorId: number;
   grupoId: number;
-  comprador: string;
+  comprador?: string;
   precio?: number;
   telefono?: string;
 }
 
 export class VenderCartonUseCase {
-  constructor(private readonly cartonRepository: ICartonRepository) {}
+  constructor(
+    private readonly cartonRepository: ICartonRepository,
+    private readonly realtimeGateway?: RealtimeGateway,
+  ) {}
 
   async execute(request: VenderCartonRequest): Promise<Carton> {
     const precioFinal = request.precio ?? 0;
@@ -44,6 +48,12 @@ export class VenderCartonUseCase {
       request.telefono
     );
 
-    return this.cartonRepository.update(carton);
+    const cartonGuardado = await this.cartonRepository.update(carton);
+    
+    if (this.realtimeGateway) {
+      this.realtimeGateway.emitCartonVendido(cartonGuardado.id);
+    }
+    
+    return cartonGuardado;
   }
 }
