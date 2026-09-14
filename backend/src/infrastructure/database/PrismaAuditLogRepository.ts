@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IAuditLogRepository, AuditLogEntry } from '../../core/domain/repositories/IAuditLogRepository';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class PrismaAuditLogRepository implements IAuditLogRepository {
