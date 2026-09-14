@@ -7,6 +7,7 @@ import { dinero } from '../lib/format';
 import { Boton, Dialogo, Spinner } from '../components/ui';
 import { BotonInstalarApp } from '../components/InstallPrompt';
 import { VentasChart } from '../components/VentasChart';
+import { motion } from 'framer-motion';
 
 interface DashboardData {
   cartones: {
@@ -44,24 +45,31 @@ function Tarjeta({ valor, label, color = 'text-white', to }: {
   to?: string;
 }) {
   const contenido = (
-    <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-black/20 active:border-brand/50">
-      <p className={`text-2xl font-bold ${color}`}>{valor}</p>
-      <p className="text-xs text-muted">{label}</p>
-    </div>
+    <motion.div 
+      whileHover={{ y: -4, scale: 1.02 }}
+      className="rounded-2xl border border-white/10 bg-surface/50 backdrop-blur-md p-5 shadow-lg shadow-black/10 transition-colors hover:bg-surface2/60"
+    >
+      <p className={`text-3xl font-extrabold tracking-tight ${color}`}>{valor}</p>
+      <p className="mt-1 text-sm font-medium text-muted">{label}</p>
+    </motion.div>
   );
   return to ? <Link to={to}>{contenido}</Link> : contenido;
 }
 
 function BotonMenu({ to, label }: { to: string; label: string }) {
   return (
-    <Link
-      to={to}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-black/20 active:border-brand/50 active:bg-surface2"
-    >
-      <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />
-      <span className="font-medium text-white">{label}</span>
-      <span className="ml-auto text-lg leading-none text-muted">›</span>
-    </Link>
+    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+      <Link
+        to={to}
+        className="flex items-center gap-4 rounded-2xl border border-white/5 bg-surface/40 backdrop-blur-md p-4 shadow-md transition-colors hover:border-brand/30 hover:bg-surface2/60 active:bg-surface2"
+      >
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10">
+          <span className="h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_8px_rgba(0,242,254,0.8)]" />
+        </div>
+        <span className="font-semibold text-white tracking-wide">{label}</span>
+        <span className="ml-auto text-xl leading-none text-muted transition-transform group-hover:translate-x-1">›</span>
+      </Link>
+    </motion.div>
   );
 }
 
@@ -113,34 +121,56 @@ export default function Dashboard() {
     }
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="mx-auto min-h-screen max-w-lg bg-bg pb-10">
-      <header className="border-b border-line bg-surface px-5 pb-5 pt-6">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted">
+    <div className="mx-auto min-h-screen max-w-lg pb-10">
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-bg/80 backdrop-blur-xl px-5 pb-5 pt-6 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-widest text-brand">
           Panel {esAdmin() ? 'Admin' : 'Vendedor'}
         </p>
         <div className="mt-1 flex items-center justify-between gap-3">
-          <h1 className="truncate text-xl font-bold text-white">Bienvenido, {user?.username}</h1>
-          <button
+          <h1 className="truncate text-2xl font-extrabold text-white">Bienvenido, {user?.username}</h1>
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setConfirmar('logout')}
             aria-label="Cuenta / cerrar sesión"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-bold text-[#00110d] active:scale-95"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-xl font-black text-[#090e17] shadow-lg shadow-brand/20"
           >
             {user?.username?.[0]?.toUpperCase() ?? '?'}
-          </button>
+          </motion.button>
         </div>
       </header>
 
-      <main className="space-y-5 px-4 pt-4">
+      <main className="space-y-6 px-4 pt-6">
         {isLoading || !data ? (
           <Spinner />
         ) : (
-          <>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
             {esAdmin() && data.ventas_por_hora && (
-              <VentasChart data={data.ventas_por_hora} />
+              <motion.div variants={itemVariants}>
+                <VentasChart data={data.ventas_por_hora} />
+              </motion.div>
             )}
             
-            <div className="grid grid-cols-2 gap-3">
+            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
               <Tarjeta valor={data.cartones.total} label="Total cartones" to="/cartones" />
               <Tarjeta valor={data.cartones.disponibles} label="Disponibles" color="text-ok" to="/cartones?estado=disponible" />
               <Tarjeta valor={data.cartones.vendidos} label="Vendidos" color="text-bad" to="/cartones?estado=vendido" />
@@ -151,64 +181,71 @@ export default function Dashboard() {
               {data.estadisticas_pdf && (
                 <Tarjeta valor={`${data.estadisticas_pdf.ratio_exito.toFixed(1)}%`} label="Éxito PDFs" color="text-white" to={tienePermiso('subir_pdf') ? '/pdfs' : undefined} />
               )}
-            </div>
+            </motion.div>
 
             {esAdmin() && data.ranking_vendedores.length > 0 && (
-              <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-black/20">
-                <h3 className="mb-3 text-sm font-bold text-white">Top 10 Vendedores</h3>
-                <div className="space-y-2">
+              <motion.div variants={itemVariants} className="rounded-2xl border border-white/5 bg-surface/40 backdrop-blur-md p-5 shadow-lg">
+                <h3 className="mb-4 text-base font-extrabold text-white">Top 10 Vendedores</h3>
+                <div className="space-y-3">
                   {data.ranking_vendedores.map((v, i) => (
-                    <div key={i} className="flex items-center justify-between border-b border-line pb-2 last:border-0 last:pb-0">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface2 text-xs font-bold text-muted">{i + 1}</span>
-                        <span className="text-sm font-medium text-white">{v.username}</span>
+                    <div key={i} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-3">
+                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${i === 0 ? 'bg-warn text-[#3a2600] shadow-[0_0_10px_rgba(245,158,11,0.5)]' : i === 1 ? 'bg-slate-300 text-slate-800' : i === 2 ? 'bg-amber-700 text-amber-100' : 'bg-surface2/80 text-muted'}`}>
+                          {i + 1}
+                        </span>
+                        <span className="text-sm font-semibold text-white tracking-wide">{v.username}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-brand">{dinero(v.recaudado)}</p>
-                        <p className="text-xs text-muted">{v.vendidos} cartones</p>
+                        <p className="text-sm font-black text-brand">{dinero(v.recaudado)}</p>
+                        <p className="text-xs font-medium text-muted">{v.vendidos} cartones</p>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
-          </>
+
+            <motion.div variants={itemVariants}>
+              <p className="mb-3 px-1 text-xs font-black uppercase tracking-widest text-muted">Módulos Principales</p>
+              <div className="space-y-3">
+                <BotonMenu to="/cartones" label="Ver cartones / Buscar" />
+                {tienePermiso('subir_pdf') && (
+                  <>
+                    <BotonMenu to="/subir-pdf" label="Subir PDF" />
+                    <BotonMenu to="/pdfs" label="Ver PDFs" />
+                  </>
+                )}
+                {esAdmin() && (
+                  <>
+                    <BotonMenu to="/usuarios" label="Usuarios" />
+                    <BotonMenu to="/grupos" label="Grupos" />
+                    <BotonMenu to="/banners" label="Banners" />
+                    <BotonMenu to="/permisos" label="Permisos" />
+                    <BotonMenu to="/auditoria" label="Registro de Auditoría" />
+                  </>
+                )}
+                <BotonInstalarApp />
+              </div>
+            </motion.div>
+          </motion.div>
         )}
 
-        <div>
-          <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-muted">Módulos</p>
-          <div className="space-y-2.5">
-            <BotonMenu to="/cartones" label="Ver cartones / Buscar" />
-            {tienePermiso('subir_pdf') && (
-              <>
-                <BotonMenu to="/subir-pdf" label="Subir PDF" />
-                <BotonMenu to="/pdfs" label="Ver PDFs" />
-              </>
-            )}
-            {esAdmin() && (
-              <>
-                <BotonMenu to="/usuarios" label="Usuarios" />
-                <BotonMenu to="/grupos" label="Grupos" />
-                <BotonMenu to="/banners" label="Banners" />
-                <BotonMenu to="/permisos" label="Permisos" />
-                <BotonMenu to="/auditoria" label="Registro de Auditoría" />
-              </>
-            )}
-            <BotonInstalarApp />
-          </div>
-        </div>
-
         {esAdmin() && (
-          <div className="space-y-2.5 rounded-2xl border border-dashed border-line p-3">
-            <p className="text-xs font-semibold uppercase text-muted">Zona admin</p>
-            <Boton variante="secundario" className="w-full" onClick={() => window.open('/api/admin/queues', '_blank')}>
-              ⏱️ Monitor de Colas (BullMQ)
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="space-y-3 rounded-2xl border border-dashed border-white/20 bg-surface/30 backdrop-blur-sm p-4 mt-8"
+          >
+            <p className="text-xs font-black uppercase tracking-widest text-muted">Zona Administrativa Peligrosa</p>
+            <Boton variante="secundario" className="w-full text-left justify-start gap-2" onClick={() => window.open('/api/admin/queues', '_blank')}>
+              <span>⏱️</span> Monitor de Colas (BullMQ)
             </Boton>
-            <div className="flex gap-2">
-              <Boton variante="primario" className="flex-1 text-sm px-2 py-3" onClick={() => descargarReporte('excel')}>
+            <div className="flex gap-3">
+              <Boton variante="primario" className="flex-1 px-2 py-3" onClick={() => descargarReporte('excel')}>
                 📊 Excel
               </Boton>
-              <Boton variante="primario" className="flex-1 text-sm px-2 py-3" onClick={() => descargarReporte('pdf')}>
+              <Boton variante="primario" className="flex-1 px-2 py-3" onClick={() => descargarReporte('pdf')}>
                 📄 PDF
               </Boton>
             </div>
@@ -218,8 +255,8 @@ export default function Dashboard() {
             <Boton variante="peligro" className="w-full" onClick={() => setConfirmar('reset')}>
               🗑 Limpiar BD (cartones y PDFs)
             </Boton>
-            {mensajeAdmin && <p className="text-sm text-muted">{mensajeAdmin}</p>}
-          </div>
+            {mensajeAdmin && <p className="text-sm font-medium text-brand">{mensajeAdmin}</p>}
+          </motion.div>
         )}
       </main>
 

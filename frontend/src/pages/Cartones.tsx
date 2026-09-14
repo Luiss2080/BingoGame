@@ -6,6 +6,7 @@ import { Pantalla } from '../components/Layout';
 
 import { Dialogo, EstadoBadge, Spinner, Vacio, Boton } from '../components/ui';
 import { dinero } from '../lib/format';
+import { motion } from 'framer-motion';
 
 interface Carton {
   id: number;
@@ -108,8 +109,8 @@ export default function Cartones() {
               else p.delete('estado');
               setParams(p, { replace: true });
             }}
-            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold ${
-              estado === f.valor ? 'bg-brand text-[#04241f]' : 'border border-line bg-surface text-muted'
+            className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-bold tracking-wide transition-all duration-300 ${
+              estado === f.valor ? 'bg-gradient-to-r from-brand to-brand-dark text-[#090e17] shadow-[0_0_15px_rgba(0,242,254,0.3)]' : 'border border-white/10 bg-surface/40 backdrop-blur-md text-muted hover:bg-surface2 hover:text-white'
             }`}
           >
             {f.label}
@@ -124,14 +125,23 @@ export default function Cartones() {
       ) : cartones.length === 0 ? (
         <Vacio mensaje={qDebounced ? 'Sin resultados' : 'No hay cartones'} />
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ staggerChildren: 0.05 }}
+          className="grid grid-cols-2 gap-4"
+        >
           {cartones.map((c) => {
             const isLockedByOther = c.lockedBy && String(c.lockedBy) !== String(usuarioActual);
             
             return (
-              <div
+              <motion.div
                 key={c.id}
-                className={`transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={!isLockedByOther ? { y: -4, scale: 1.03 } : {}}
+                whileTap={!isLockedByOther ? { scale: 0.95 } : {}}
+                className={`transition-all duration-300 ${
                   isLockedByOther ? 'opacity-50 grayscale select-none pointer-events-none' : ''
                 }`}
                 style={{ contentVisibility: 'auto' }}
@@ -141,15 +151,15 @@ export default function Cartones() {
                   onClick={() => {
                     if (!isLockedByOther) emitTap(c.id);
                   }}
-                  className="block overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-black/20 transition active:border-brand/60 relative"
+                  className="block overflow-hidden rounded-2xl border border-white/10 bg-surface/50 backdrop-blur-md shadow-lg shadow-black/20 hover:border-brand/40 relative"
                 >
                   {isLockedByOther && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/50 text-white backdrop-blur-sm">
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white">
                       <span className="text-3xl">🔒</span>
-                      <span className="mt-1 text-xs font-semibold">En uso</span>
+                      <span className="mt-2 text-xs font-black uppercase tracking-widest text-brand">En uso</span>
                     </div>
                   )}
-                  <div className="relative aspect-[4/3] bg-bg">
+                  <div className="relative aspect-[4/3] bg-bg/50">
                     <img
                       src={`/api/cartones/${c.id}/imagen?v=${c.estado}`}
                       alt={`Cartón ${c.numero}`}
@@ -160,18 +170,18 @@ export default function Cartones() {
                       <EstadoBadge estado={c.estado} />
                     </span>
                   </div>
-                  <div className="p-3">
-                    <p className="truncate text-lg font-bold text-white">#{c.numero}</p>
-                    <p className="truncate text-xs text-muted">
+                  <div className="p-4">
+                    <p className="truncate text-xl font-extrabold text-white">#{c.numero}</p>
+                    <p className="mt-1 truncate text-xs font-medium text-muted">
                       {c.comprador || 'Sin asignar'}
                       {c.precio != null && c.precio > 0 ? ` · ${dinero(c.precio)}` : ''}
                     </p>
                   </div>
                 </Link>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
 
       <div ref={sentinela} className="h-8" />
