@@ -14,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     QueueModule,
     PdfsModule,
     AdminModule,
+    RealtimeModule,
   ],
   controllers: [HealthController],
   providers: [SeedService],

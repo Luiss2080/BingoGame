@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
 import { CartonesController } from './cartones.controller';
 import { CartonesService } from './cartones.service';
+import { ICartonRepositoryToken } from '../core/domain/repositories/ICartonRepository';
 import { PrismaCartonRepository } from '../infrastructure/database/PrismaCartonRepository';
 import { GetCartonUseCase } from '../core/application/use-cases/GetCartonUseCase';
 import { ReservarCartonUseCase } from '../core/application/use-cases/ReservarCartonUseCase';
 import { VenderCartonUseCase } from '../core/application/use-cases/VenderCartonUseCase';
 import { LiberarCartonUseCase } from '../core/application/use-cases/LiberarCartonUseCase';
 import { EliminarCartonUseCase } from '../core/application/use-cases/EliminarCartonUseCase';
-import { ICartonRepositoryToken } from '../core/domain/repositories/ICartonRepository';
+import { RealtimeModule } from '../realtime/realtime.module';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Module({
+  imports: [RealtimeModule],
   controllers: [CartonesController],
   providers: [
     CartonesService,
@@ -24,18 +27,18 @@ import { ICartonRepositoryToken } from '../core/domain/repositories/ICartonRepos
     },
     {
       provide: ReservarCartonUseCase,
-      useFactory: (repo) => new ReservarCartonUseCase(repo),
-      inject: [ICartonRepositoryToken],
+      useFactory: (repo, gateway) => new ReservarCartonUseCase(repo, gateway),
+      inject: [ICartonRepositoryToken, RealtimeGateway],
     },
     {
       provide: VenderCartonUseCase,
-      useFactory: (repo) => new VenderCartonUseCase(repo),
-      inject: [ICartonRepositoryToken],
+      useFactory: (repo, gateway) => new VenderCartonUseCase(repo, gateway),
+      inject: [ICartonRepositoryToken, RealtimeGateway],
     },
     {
       provide: LiberarCartonUseCase,
-      useFactory: (repo) => new LiberarCartonUseCase(repo),
-      inject: [ICartonRepositoryToken],
+      useFactory: (repo, gateway) => new LiberarCartonUseCase(repo, gateway),
+      inject: [ICartonRepositoryToken, RealtimeGateway],
     },
     {
       provide: EliminarCartonUseCase,

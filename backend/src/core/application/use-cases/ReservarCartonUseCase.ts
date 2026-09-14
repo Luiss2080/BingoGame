@@ -1,5 +1,6 @@
 import { ICartonRepository } from '../../domain/repositories/ICartonRepository';
 import { Carton, EstadoCarton } from '../../domain/entities/Carton';
+import { RealtimeGateway } from '../../../realtime/realtime.gateway';
 
 export interface ReservarCartonRequest {
   id: number;
@@ -8,7 +9,10 @@ export interface ReservarCartonRequest {
 }
 
 export class ReservarCartonUseCase {
-  constructor(private readonly cartonRepository: ICartonRepository) {}
+  constructor(
+    private readonly cartonRepository: ICartonRepository,
+    private readonly realtimeGateway?: RealtimeGateway,
+  ) {}
 
   async execute(request: ReservarCartonRequest): Promise<Carton> {
     const carton = await this.cartonRepository.findById(request.id);
@@ -31,6 +35,12 @@ export class ReservarCartonUseCase {
     // In a real application we would set a TTL in Redis or save the reserve timestamp.
     carton.fechaActualizacion = new Date();
 
-    return this.cartonRepository.update(carton);
+    const cartonGuardado = await this.cartonRepository.save(carton);
+    
+    if (this.realtimeGateway) {
+      this.realtimeGateway.emitCartonReservado(cartonGuardado.id);
+    }
+    
+    return cartonGuardado;
   }
 }
