@@ -37,6 +37,7 @@ model User {
   fechaCreacion DateTime       @default(now()) @map("fecha_creacion")
   cartones      Carton[]
   pdfs          PdfProcesado[]
+  auditLogs     AuditLog[]
 
   @@index([grupoId])
   @@map("users")
