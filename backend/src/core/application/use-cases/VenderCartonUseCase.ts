@@ -1,6 +1,7 @@
 import { ICartonRepository } from '../../domain/repositories/ICartonRepository';
 import { Carton, EstadoCarton } from '../../domain/entities/Carton';
 import { RealtimeGateway } from '../../../realtime/realtime.gateway';
+import { IAuditLogRepository } from '../../domain/repositories/IAuditLogRepository';
 
 export interface VenderCartonRequest {
   id: number;
@@ -15,6 +16,7 @@ export class VenderCartonUseCase {
   constructor(
     private readonly cartonRepository: ICartonRepository,
     private readonly realtimeGateway?: RealtimeGateway,
+    private readonly auditLogRepository?: IAuditLogRepository,
   ) {}
 
   async execute(request: VenderCartonRequest): Promise<Carton> {
@@ -50,6 +52,21 @@ export class VenderCartonUseCase {
 
     const cartonGuardado = await this.cartonRepository.update(carton);
     
+    if (this.auditLogRepository) {
+      await this.auditLogRepository.save({
+        entidad: 'Carton',
+        entidadId: cartonGuardado.id,
+        accion: 'VENDER',
+        usuarioId: request.vendedorId,
+        estadoAnterior: { estado: 'disponible_o_reservado' },
+        estadoNuevo: { 
+          estado: 'vendido', 
+          precio: precioFinal, 
+          comprador: request.comprador 
+        },
+      });
+    }
+
     if (this.realtimeGateway) {
       this.realtimeGateway.emitCartonVendido(cartonGuardado.id);
     }
