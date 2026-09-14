@@ -1,8 +1,11 @@
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { IUserRepository, IUserRepositoryToken } from '../../domain/repositories/IUserRepository';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { Injectable, Inject } from '@nestjs/common';
 
+@Injectable()
 export class EliminarUsuarioUseCase {
   constructor(
+    @Inject(IUserRepositoryToken)
     private readonly userRepository: IUserRepository,
     private readonly prisma: PrismaService,
   ) {}
