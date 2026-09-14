@@ -1,38 +1,46 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Primario: teal (estilo App_Atletic) */
-  --color-brand: #00bfa5;
-  --color-brand-dark: #008b76;
+  /* Paleta moderna y vibrante: Cyan a Púrpura Neon */
+  --color-brand: #00f2fe;
+  --color-brand-dark: #4facfe;
 
-  /* Superficies navy oscuro */
-  --color-bg: #0d1b2a;
-  --color-surface: #162232;
-  --color-surface2: #1e2e42;
-  --color-line: #2a3d55;
+  /* Superficies modo oscuro profundo */
+  --color-bg: #090e17; /* Más oscuro, tipo fintech */
+  --color-surface: rgba(18, 28, 45, 0.65); /* Translúcido para glassmorphism */
+  --color-surface2: rgba(30, 46, 66, 0.8);
+  --color-line: rgba(255, 255, 255, 0.1);
 
   /* Texto */
-  --color-muted: #8899bb;
-  --color-hint: #4a5f75;
+  --color-muted: #94a3b8;
+  --color-hint: #64748b;
 
-  /* Estados */
-  --color-ok: #4caf50;
-  --color-warn: #ff9800;
-  --color-bad: #ef5350;
+  /* Estados vibrantes */
+  --color-ok: #10b981;
+  --color-warn: #f59e0b;
+  --color-bad: #ef4444;
 
   /* Compat: nombres de estado usados en la UI */
-  --color-disponible: #4caf50;
-  --color-vendido: #ef5350;
-  --color-reservado: #ff9800;
+  --color-disponible: #10b981;
+  --color-vendido: #ef4444;
+  --color-reservado: #f59e0b;
 }
 
 html,
 body,
 #root {
   background-color: var(--color-bg);
+  font-family: 'Outfit', sans-serif;
+  /* Fondo con gradiente sutil y mesh moderno */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 body {
-  color: #fff;
+  color: #f8fafc;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
