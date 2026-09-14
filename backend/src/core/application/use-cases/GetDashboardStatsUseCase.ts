@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 export interface DashboardStatsRequest {
   userId: number;
@@ -70,14 +70,14 @@ export class GetDashboardStatsUseCase {
       take: 10,
     });
 
-    const usuariosIds = ranking.map((r) => r.vendedorId!).filter(Boolean);
+    const usuariosIds = ranking.map((r: any) => r.vendedorId!).filter(Boolean);
     const usuarios = await this.prisma.user.findMany({
       where: { id: { in: usuariosIds } },
       select: { id: true, username: true },
     });
-    const mapUsuarios = new Map(usuarios.map((u) => [u.id, u.username]));
+    const mapUsuarios = new Map(usuarios.map((u: any) => [u.id, u.username]));
 
-    const ranking_vendedores = ranking.map((r) => ({
+    const ranking_vendedores = ranking.map((r: any) => ({
       username: mapUsuarios.get(r.vendedorId!) || 'Desconocido',
       vendidos: r._count.id,
       recaudado: Number(r._sum.precio || 0),
@@ -110,7 +110,7 @@ export class GetDashboardStatsUseCase {
         ORDER BY hora ASC
       `);
       
-      ventasPorHora = ventas.map(v => ({
+      ventasPorHora = ventas.map((v: any) => ({
         hora: v.hora,
         cantidad: Number(v.cantidad),
         ingresos: Number(v.ingresos || 0)

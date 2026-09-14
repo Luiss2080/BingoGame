@@ -9,7 +9,7 @@ export class DashboardController {
   @Get()
   async getDashboardStats(@CurrentUser() user: AuthUser) {
     return this.getDashboardStatsUseCase.execute({
-      userId: user.sub,
+      userId: user.id,
       rol: user.rol,
       grupoId: user.grupoId,
     });
