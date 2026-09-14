@@ -35,7 +35,7 @@ export class ReservarCartonUseCase {
     // In a real application we would set a TTL in Redis or save the reserve timestamp.
     carton.fechaActualizacion = new Date();
 
-    const cartonGuardado = await this.cartonRepository.save(carton);
+    const cartonGuardado = await this.cartonRepository.update(carton);
     
     if (this.realtimeGateway) {
       this.realtimeGateway.emitCartonReservado(cartonGuardado.id);
