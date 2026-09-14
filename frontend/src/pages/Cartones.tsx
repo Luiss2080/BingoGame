@@ -13,6 +13,7 @@ interface Carton {
   estado: string;
   comprador: string | null;
   precio: number | null;
+  lockedBy?: string | null;
 }
 interface PaginaCartones {
   cartones: Carton[];
@@ -28,6 +29,9 @@ const FILTROS = [
   { valor: 'reservado', label: 'Reservados' },
 ] as const;
 
+import { useRealtimeCartones } from '../hooks/useRealtimeCartones';
+import { useAuth } from '../stores/auth.store';
+
 export default function Cartones() {
   const [params, setParams] = useSearchParams();
   const estado = params.get('estado') ?? '';
@@ -35,6 +39,9 @@ export default function Cartones() {
   const [qDebounced, setQDebounced] = useState(q);
   const [verNoDisponible, setVerNoDisponible] = useState(false);
   const sentinela = useRef<HTMLDivElement>(null);
+
+  const { emitTap } = useRealtimeCartones();
+  const usuarioActual = useAuth((s) => s.user?.sub);
 
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim()), 350);
@@ -118,37 +125,52 @@ export default function Cartones() {
         <Vacio mensaje={qDebounced ? 'Sin resultados' : 'No hay cartones'} />
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {cartones.map((c) => (
-            <div
-              key={c.id}
-              className="transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
-              style={{ contentVisibility: 'auto' }}
-            >
-              <Link
-                to={`/cartones/${c.id}`}
-                className="block overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-black/20 transition active:border-brand/60"
+          {cartones.map((c) => {
+            const isLockedByOther = c.lockedBy && c.lockedBy !== usuarioActual;
+            
+            return (
+              <div
+                key={c.id}
+                className={`transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                  isLockedByOther ? 'opacity-50 grayscale select-none pointer-events-none' : ''
+                }`}
+                style={{ contentVisibility: 'auto' }}
               >
-                <div className="relative aspect-[4/3] bg-bg">
-                  <img
-                    src={`/api/cartones/${c.id}/imagen?v=${c.estado}`}
-                    alt={`Cartón ${c.numero}`}
-                    loading="lazy"
-                    className="h-full w-full object-cover object-top"
-                  />
-                  <span className="absolute right-2 top-2">
-                    <EstadoBadge estado={c.estado} />
-                  </span>
-                </div>
-                <div className="p-3">
-                  <p className="truncate text-lg font-bold text-white">#{c.numero}</p>
-                  <p className="truncate text-xs text-muted">
-                    {c.comprador || 'Sin asignar'}
-                    {c.precio != null && c.precio > 0 ? ` · ${dinero(c.precio)}` : ''}
-                  </p>
-                </div>
-              </Link>
-            </div>
-          ))}
+                <Link
+                  to={`/cartones/${c.id}`}
+                  onClick={() => {
+                    if (!isLockedByOther) emitTap(c.id);
+                  }}
+                  className="block overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-black/20 transition active:border-brand/60 relative"
+                >
+                  {isLockedByOther && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/50 text-white backdrop-blur-sm">
+                      <span className="text-3xl">🔒</span>
+                      <span className="mt-1 text-xs font-semibold">En uso</span>
+                    </div>
+                  )}
+                  <div className="relative aspect-[4/3] bg-bg">
+                    <img
+                      src={`/api/cartones/${c.id}/imagen?v=${c.estado}`}
+                      alt={`Cartón ${c.numero}`}
+                      loading="lazy"
+                      className="h-full w-full object-cover object-top"
+                    />
+                    <span className="absolute right-2 top-2">
+                      <EstadoBadge estado={c.estado} />
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <p className="truncate text-lg font-bold text-white">#{c.numero}</p>
+                    <p className="truncate text-xs text-muted">
+                      {c.comprador || 'Sin asignar'}
+                      {c.precio != null && c.precio > 0 ? ` · ${dinero(c.precio)}` : ''}
+                    </p>
+                  </div>
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
 

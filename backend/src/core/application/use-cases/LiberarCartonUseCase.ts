@@ -1,12 +1,16 @@
-import { Carton } from '../../domain/entities/Carton';
 import { ICartonRepository } from '../../domain/repositories/ICartonRepository';
+import { Carton, EstadoCarton } from '../../domain/entities/Carton';
+import { RealtimeGateway } from '../../../realtime/realtime.gateway';
 
 export interface LiberarCartonRequest {
   id: number;
 }
 
 export class LiberarCartonUseCase {
-  constructor(private readonly cartonRepository: ICartonRepository) {}
+  constructor(
+    private readonly cartonRepository: ICartonRepository,
+    private readonly realtimeGateway?: RealtimeGateway,
+  ) {}
 
   async execute(request: LiberarCartonRequest): Promise<Carton> {
     const carton = await this.cartonRepository.findById(request.id);
@@ -16,6 +20,12 @@ export class LiberarCartonUseCase {
 
     carton.liberar();
 
-    return this.cartonRepository.update(carton);
+    const cartonGuardado = await this.cartonRepository.update(carton);
+    
+    if (this.realtimeGateway) {
+      this.realtimeGateway.emitCartonLiberado(cartonGuardado.id);
+    }
+    
+    return cartonGuardado;
   }
 }
