@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class GenerarReporteExcelUseCase {
@@ -35,12 +35,12 @@ export class GenerarReporteExcelUseCase {
       orderBy: { _sum: { precio: 'desc' } },
     });
 
-    const usuariosIds = ranking.map((r) => r.vendedorId!).filter(Boolean);
+    const usuariosIds = ranking.map((r: any) => r.vendedorId!).filter(Boolean);
     const usuarios = await this.prisma.user.findMany({
       where: { id: { in: usuariosIds } },
       select: { id: true, username: true },
     });
-    const mapUsuarios = new Map(usuarios.map((u) => [u.id, u.username]));
+    const mapUsuarios = new Map(usuarios.map((u: any) => [u.id, u.username]));
 
     let granTotal = 0;
     let totalCartones = 0;
@@ -103,6 +103,6 @@ export class GenerarReporteExcelUseCase {
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
-    return buffer as Buffer;
+    return buffer as unknown as Buffer;
   }
 }

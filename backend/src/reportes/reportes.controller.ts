@@ -1,14 +1,11 @@
-import { Controller, Get, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RequireRoles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
+import { AdminOnly } from '../auth/decorators';
 import { GenerarReporteExcelUseCase } from '../core/application/use-cases/GenerarReporteExcelUseCase';
 import { GenerarReportePdfUseCase } from '../core/application/use-cases/GenerarReportePdfUseCase';
 
 @Controller('reportes')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@RequireRoles('admin')
+@AdminOnly()
 export class ReportesController {
   constructor(
     private readonly generarReporteExcelUseCase: GenerarReporteExcelUseCase,

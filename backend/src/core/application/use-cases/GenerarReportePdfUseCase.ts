@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import * as PDFDocument from 'pdfkit';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import PDFDocument = require('pdfkit');
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class GenerarReportePdfUseCase {
@@ -28,12 +28,12 @@ export class GenerarReportePdfUseCase {
       orderBy: { _sum: { precio: 'desc' } },
     });
 
-    const usuariosIds = ranking.map((r) => r.vendedorId!).filter(Boolean);
+    const usuariosIds = ranking.map((r: any) => r.vendedorId!).filter(Boolean);
     const usuarios = await this.prisma.user.findMany({
       where: { id: { in: usuariosIds } },
       select: { id: true, username: true },
     });
-    const mapUsuarios = new Map(usuarios.map((u) => [u.id, u.username]));
+    const mapUsuarios = new Map(usuarios.map((u: any) => [u.id, u.username]));
 
     let granTotal = 0;
     let totalCartones = 0;
@@ -56,7 +56,7 @@ export class GenerarReportePdfUseCase {
       granTotal += rec;
       totalCartones += r._count.id;
       
-      const vendedor = mapUsuarios.get(r.vendedorId!) || 'Desconocido';
+      const vendedor = String(mapUsuarios.get(r.vendedorId!) || 'Desconocido');
       
       doc.text(vendedor, 50, y);
       doc.text(r._count.id.toString(), 300, y);

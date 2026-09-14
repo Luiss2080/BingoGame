@@ -203,6 +203,14 @@ export default function Dashboard() {
             <Boton variante="secundario" className="w-full" onClick={() => window.open('/api/admin/queues', '_blank')}>
               ⏱️ Monitor de Colas (BullMQ)
             </Boton>
+            <div className="flex gap-2">
+              <Boton variante="primario" className="flex-1 text-sm px-2 py-3" onClick={() => descargarReporte('excel')}>
+                📊 Excel
+              </Boton>
+              <Boton variante="primario" className="flex-1 text-sm px-2 py-3" onClick={() => descargarReporte('pdf')}>
+                📄 PDF
+              </Boton>
+            </div>
             <Boton variante="secundario" className="w-full" onClick={() => setConfirmar('regenerar')}>
               🖼 Regenerar imágenes
             </Boton>
