@@ -18,6 +18,7 @@ import Usuarios from './pages/Usuarios';
 import Grupos from './pages/Grupos';
 import Banners from './pages/Banners';
 import Permisos from './pages/Permisos';
+import { Auditoria } from './pages/Auditoria';
 
 const queryClient = new QueryClient({
   defaultOptions: {
