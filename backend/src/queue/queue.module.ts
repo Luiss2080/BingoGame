@@ -1,6 +1,9 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { PDF_QUEUE } from '@bingo/common';
 import { PdfProcessor } from './pdf.processor';
 
@@ -28,6 +31,14 @@ import { PdfProcessor } from './pdf.processor';
         removeOnComplete: 100,
         removeOnFail: 500,
       },
+    }),
+    BullBoardModule.forRoot({
+      route: '/admin/queues',
+      adapter: ExpressAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: PDF_QUEUE,
+      adapter: BullMQAdapter,
     }),
   ],
   providers: [PdfProcessor],
