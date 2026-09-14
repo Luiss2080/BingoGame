@@ -133,9 +133,12 @@ export class CartonesController {
 
   @Post('cartones/:id/liberar')
   @RequierePermiso('liberar')
-  async liberar(@Param('id', ParseIntPipe) id: number) {
+  async liberar(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
     try {
-      const carton = await this.liberarCartonUseCase.execute({ id });
+      const carton = await this.liberarCartonUseCase.execute({ id, usuarioId: user.id });
       return carton;
     } catch (e: any) {
       throw new BadRequestException(e.message);
