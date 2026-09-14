@@ -13,6 +13,9 @@ importers:
       '@bingo/common':
         specifier: workspace:*
         version: link:../libs/common
+      '@bull-board/api':
+        specifier: ^9.10.1
+        version: 9.10.1(@bull-board/ui@9.10.1(bullmq@5.79.4)(typescript@5.9.3))(bullmq@5.79.4)(typescript@5.9.3)
       '@bull-board/express':
         specifier: ^9.10.1
         version: 9.10.1(bullmq@5.79.4)(typescript@5.9.3)
