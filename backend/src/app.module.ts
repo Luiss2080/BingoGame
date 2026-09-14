@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { BannersModule } from './banners/banners.module';
 import { SeedService } from './bootstrap/seed.service';
@@ -34,6 +35,7 @@ import { ReportesModule } from './reportes/reportes.module';
     AdminModule,
     RealtimeModule,
     ReportesModule,
+    AuditModule,
   ],
   controllers: [HealthController],
   providers: [SeedService],

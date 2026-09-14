@@ -11,8 +11,11 @@ import { EliminarCartonUseCase } from '../core/application/use-cases/EliminarCar
 import { RealtimeModule } from '../realtime/realtime.module';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
+import { IAuditLogRepositoryToken } from '../core/domain/repositories/IAuditLogRepositoryToken';
+import { AuditModule } from '../audit/audit.module';
+
 @Module({
-  imports: [RealtimeModule],
+  imports: [RealtimeModule, AuditModule],
   controllers: [CartonesController],
   providers: [
     CartonesService,
@@ -27,18 +30,18 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
     },
     {
       provide: ReservarCartonUseCase,
-      useFactory: (repo, gateway) => new ReservarCartonUseCase(repo, gateway),
-      inject: [ICartonRepositoryToken, RealtimeGateway],
+      useFactory: (repo, gateway, audit) => new ReservarCartonUseCase(repo, gateway, audit),
+      inject: [ICartonRepositoryToken, RealtimeGateway, IAuditLogRepositoryToken],
     },
     {
       provide: VenderCartonUseCase,
-      useFactory: (repo, gateway) => new VenderCartonUseCase(repo, gateway),
-      inject: [ICartonRepositoryToken, RealtimeGateway],
+      useFactory: (repo, gateway, audit) => new VenderCartonUseCase(repo, gateway, audit),
+      inject: [ICartonRepositoryToken, RealtimeGateway, IAuditLogRepositoryToken],
     },
     {
       provide: LiberarCartonUseCase,
-      useFactory: (repo, gateway) => new LiberarCartonUseCase(repo, gateway),
-      inject: [ICartonRepositoryToken, RealtimeGateway],
+      useFactory: (repo, gateway, audit) => new LiberarCartonUseCase(repo, gateway, audit),
+      inject: [ICartonRepositoryToken, RealtimeGateway, IAuditLogRepositoryToken],
     },
     {
       provide: EliminarCartonUseCase,
