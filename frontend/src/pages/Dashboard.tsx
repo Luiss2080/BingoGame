@@ -6,15 +6,35 @@ import { useAuth } from '../stores/auth.store';
 import { dinero } from '../lib/format';
 import { Boton, Dialogo, Spinner } from '../components/ui';
 import { BotonInstalarApp } from '../components/InstallPrompt';
+import { VentasChart } from '../components/VentasChart';
 
 interface DashboardData {
-  total_cartones: number;
-  disponibles: number;
-  vendidos: number;
-  reservados: number;
-  total_pdfs: number;
-  ingresos: number;
-  es_admin: boolean;
+  cartones: {
+    total: number;
+    disponibles: number;
+    disponibles_unicos: number;
+    vendidos: number;
+    reservados: number;
+  };
+  financiero?: {
+    total_recaudado: number;
+  };
+  ranking_vendedores: {
+    username: string;
+    vendidos: number;
+    recaudado: number;
+  }[];
+  ultimos_pdfs: any[];
+  estadisticas_pdf?: {
+    total: number;
+    exitosos: number;
+    ratio_exito: number;
+  };
+  ventas_por_hora?: {
+    hora: string;
+    cantidad: number;
+    ingresos: number;
+  }[];
 }
 
 function Tarjeta({ valor, label, color = 'text-white', to }: {
@@ -90,14 +110,44 @@ export default function Dashboard() {
         {isLoading || !data ? (
           <Spinner />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <Tarjeta valor={data.total_cartones} label="Total cartones" to="/cartones" />
-            <Tarjeta valor={data.disponibles} label="Disponibles" color="text-ok" to="/cartones?estado=disponible" />
-            <Tarjeta valor={data.vendidos} label="Vendidos" color="text-bad" to="/cartones?estado=vendido" />
-            <Tarjeta valor={data.reservados} label="Reservados" color="text-warn" to="/cartones?estado=reservado" />
-            <Tarjeta valor={dinero(data.ingresos)} label="Ingresos" color="text-brand" />
-            <Tarjeta valor={data.total_pdfs} label="PDFs" to={tienePermiso('subir_pdf') ? '/pdfs' : undefined} />
-          </div>
+          <>
+            {esAdmin() && data.ventas_por_hora && (
+              <VentasChart data={data.ventas_por_hora} />
+            )}
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Tarjeta valor={data.cartones.total} label="Total cartones" to="/cartones" />
+              <Tarjeta valor={data.cartones.disponibles} label="Disponibles" color="text-ok" to="/cartones?estado=disponible" />
+              <Tarjeta valor={data.cartones.vendidos} label="Vendidos" color="text-bad" to="/cartones?estado=vendido" />
+              <Tarjeta valor={data.cartones.reservados} label="Reservados" color="text-warn" to="/cartones?estado=reservado" />
+              {data.financiero && (
+                <Tarjeta valor={dinero(data.financiero.total_recaudado)} label="Ingresos" color="text-brand" />
+              )}
+              {data.estadisticas_pdf && (
+                <Tarjeta valor={`${data.estadisticas_pdf.ratio_exito.toFixed(1)}%`} label="Éxito PDFs" color="text-white" to={tienePermiso('subir_pdf') ? '/pdfs' : undefined} />
+              )}
+            </div>
+
+            {esAdmin() && data.ranking_vendedores.length > 0 && (
+              <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-black/20">
+                <h3 className="mb-3 text-sm font-bold text-white">Top 10 Vendedores</h3>
+                <div className="space-y-2">
+                  {data.ranking_vendedores.map((v, i) => (
+                    <div key={i} className="flex items-center justify-between border-b border-line pb-2 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface2 text-xs font-bold text-muted">{i + 1}</span>
+                        <span className="text-sm font-medium text-white">{v.username}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-brand">{dinero(v.recaudado)}</p>
+                        <p className="text-xs text-muted">{v.vendidos} cartones</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <div>
@@ -125,6 +175,9 @@ export default function Dashboard() {
         {esAdmin() && (
           <div className="space-y-2.5 rounded-2xl border border-dashed border-line p-3">
             <p className="text-xs font-semibold uppercase text-muted">Zona admin</p>
+            <Boton variante="secundario" className="w-full" onClick={() => window.open('/api/admin/queues', '_blank')}>
+              ⏱️ Monitor de Colas (BullMQ)
+            </Boton>
             <Boton variante="secundario" className="w-full" onClick={() => setConfirmar('regenerar')}>
               🖼 Regenerar imágenes
             </Boton>
