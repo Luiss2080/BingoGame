@@ -88,6 +88,31 @@ export default function Dashboard() {
     setConfirmar(null);
   }
 
+  async function descargarReporte(tipo: 'excel' | 'pdf') {
+    try {
+      const token = localStorage.getItem('bingo_token');
+      const response = await fetch(`/api/reportes/${tipo}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Error al generar el reporte');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = tipo === 'excel' ? `Reporte_Ventas_${Date.now()}.xlsx` : `Corte_Caja_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      setMensajeAdmin(e instanceof Error ? e.message : 'Error desconocido');
+    }
+  }
+
   return (
     <div className="mx-auto min-h-screen max-w-lg bg-bg pb-10">
       <header className="border-b border-line bg-surface px-5 pb-5 pt-6">

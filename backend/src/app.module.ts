@@ -15,6 +15,7 @@ import { QueueModule } from './queue/queue.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { ReportesModule } from './reportes/reportes.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RealtimeModule } from './realtime/realtime.module';
     PdfsModule,
     AdminModule,
     RealtimeModule,
+    ReportesModule,
   ],
   controllers: [HealthController],
   providers: [SeedService],
