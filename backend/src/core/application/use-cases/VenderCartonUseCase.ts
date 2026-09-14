@@ -43,7 +43,7 @@ export class VenderCartonUseCase {
 
     carton.marcarComoVendido(
       request.vendedorId,
-      request.comprador,
+      request.comprador ?? '',
       precioFinal,
       request.telefono
     );

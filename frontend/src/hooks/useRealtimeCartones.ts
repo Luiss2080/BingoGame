@@ -2,7 +2,14 @@ import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../stores/auth.store';
 import { useQueryClient } from '@tanstack/react-query';
-import { CartonDto } from '@bingo/common'; // Assuming we have types for Carton
+interface Carton {
+  id: number;
+  numero: string;
+  estado: string;
+  comprador: string | null;
+  precio: number | null;
+  lockedBy?: string | null;
+}
 
 export function useRealtimeCartones() {
   const socketRef = useRef<Socket | null>(null);
@@ -22,7 +29,7 @@ export function useRealtimeCartones() {
     // Escuchar eventos globales y mutar el caché local
     socket.on('carton:reservado', ({ cartonId }: { cartonId: number }) => {
       // Invalidar o actualizar caché de react-query
-      queryClient.setQueryData(['cartones'], (oldData: CartonDto[] | undefined) => {
+      queryClient.setQueryData(['cartones'], (oldData: Carton[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map(c => c.id === cartonId ? { ...c, estado: 'reservado' } : c);
       });
@@ -31,7 +38,7 @@ export function useRealtimeCartones() {
     });
 
     socket.on('carton:vendido', ({ cartonId }: { cartonId: number }) => {
-      queryClient.setQueryData(['cartones'], (oldData: CartonDto[] | undefined) => {
+      queryClient.setQueryData(['cartones'], (oldData: Carton[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map(c => c.id === cartonId ? { ...c, estado: 'vendido' } : c);
       });
@@ -39,7 +46,7 @@ export function useRealtimeCartones() {
     });
 
     socket.on('carton:liberado', ({ cartonId }: { cartonId: number }) => {
-      queryClient.setQueryData(['cartones'], (oldData: CartonDto[] | undefined) => {
+      queryClient.setQueryData(['cartones'], (oldData: Carton[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map(c => c.id === cartonId ? { ...c, estado: 'disponible', lockedBy: null } : c);
       });
@@ -47,7 +54,7 @@ export function useRealtimeCartones() {
     });
 
     socket.on('carton:bloqueado_temporal', ({ cartonId, lockedBy }: { cartonId: number, lockedBy: string }) => {
-      queryClient.setQueryData(['cartones'], (oldData: CartonDto[] | undefined) => {
+      queryClient.setQueryData(['cartones'], (oldData: Carton[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map(c => c.id === cartonId ? { ...c, lockedBy } : c);
       });

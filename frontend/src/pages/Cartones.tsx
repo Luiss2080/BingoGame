@@ -41,7 +41,7 @@ export default function Cartones() {
   const sentinela = useRef<HTMLDivElement>(null);
 
   const { emitTap } = useRealtimeCartones();
-  const usuarioActual = useAuth((s) => s.user?.sub);
+  const usuarioActual = useAuth((s) => s.user?.id);
 
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim()), 350);
@@ -126,7 +126,7 @@ export default function Cartones() {
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {cartones.map((c) => {
-            const isLockedByOther = c.lockedBy && c.lockedBy !== usuarioActual;
+            const isLockedByOther = c.lockedBy && String(c.lockedBy) !== String(usuarioActual);
             
             return (
               <div
