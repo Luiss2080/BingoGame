@@ -1,21 +1,33 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UnauthorizedException } from '@nestjs/common';
 import { loginSchema, type LoginDto } from '@bingo/common';
 import { ZodPipe } from '../common/zod.pipe';
-import { AuthService } from './auth.service';
 import { CurrentUser, Public, AuthUser } from './decorators';
+import { LoginUseCase } from '../core/application/use-cases/LoginUseCase';
+import { GetPerfilUseCase } from '../core/application/use-cases/GetPerfilUseCase';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly loginUseCase: LoginUseCase,
+    private readonly getPerfilUseCase: GetPerfilUseCase,
+  ) {}
 
   @Public()
   @Post('login')
-  login(@Body(new ZodPipe(loginSchema)) body: LoginDto) {
-    return this.auth.login(body);
+  async login(@Body(new ZodPipe(loginSchema)) body: LoginDto) {
+    try {
+      return await this.loginUseCase.execute(body);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message);
+    }
   }
 
   @Get('me')
-  me(@CurrentUser() user: AuthUser) {
-    return this.auth.me(user.id);
+  async me(@CurrentUser() user: AuthUser) {
+    try {
+      return await this.getPerfilUseCase.execute(user.id);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message);
+    }
   }
 }
