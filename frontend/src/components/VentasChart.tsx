@@ -43,7 +43,7 @@ export function VentasChart({ data }: VentasChartProps) {
             <Tooltip
               contentStyle={{ backgroundColor: '#1A2A3A', borderColor: '#2D3E50', borderRadius: '8px' }}
               itemStyle={{ color: '#E2E8F0' }}
-              formatter={(value: number, name: string) => [name === 'ingresos' ? dinero(value) : value, name === 'ingresos' ? 'Ingresos' : 'Cantidad']}
+              formatter={(value: any, name: any) => [name === 'ingresos' ? dinero(Number(value)) : value, name === 'ingresos' ? 'Ingresos' : 'Cantidad']}
               labelStyle={{ color: '#8795A1', marginBottom: '4px' }}
             />
             <Area
