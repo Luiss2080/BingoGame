@@ -191,6 +191,7 @@ export default function Dashboard() {
                 <BotonMenu to="/grupos" label="Grupos" />
                 <BotonMenu to="/banners" label="Banners" />
                 <BotonMenu to="/permisos" label="Permisos" />
+                <BotonMenu to="/auditoria" label="Registro de Auditoría" />
               </>
             )}
             <BotonInstalarApp />

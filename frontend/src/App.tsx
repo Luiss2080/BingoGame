@@ -60,6 +60,7 @@ export default function App() {
               <Route path="/grupos" element={<Grupos />} />
               <Route path="/banners" element={<Banners />} />
               <Route path="/permisos" element={<Permisos />} />
+              <Route path="/auditoria" element={<Auditoria />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
