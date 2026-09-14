@@ -120,3 +120,20 @@ model PermisoRol {
   @@unique([rol, permiso], name: "uq_permiso_rol")
   @@map("permisos_rol")
 }
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  entidad       String   @db.VarChar(50)
+  entidadId     Int      @map("entidad_id")
+  accion        String   @db.VarChar(50)
+  usuarioId     Int      @map("usuario_id")
+  usuario       User     @relation(fields: [usuarioId], references: [id])
+  estadoAnterior Json?   @map("estado_anterior")
+  estadoNuevo    Json?   @map("estado_nuevo")
+  fecha         DateTime @default(now())
+
+  @@index([entidad, entidadId])
+  @@index([usuarioId])
+  @@index([fecha])
+  @@map("audit_logs")
+}
