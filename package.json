@@ -10,7 +10,8 @@
     "build": "pnpm --filter @bingo/common build && pnpm --filter backend build && pnpm --filter frontend build",
     "migrate": "pnpm --filter backend prisma:migrate",
     "infra:up": "docker compose -f docker/docker-compose.dev.yml up -d",
-    "infra:down": "docker compose -f docker/docker-compose.dev.yml down"
+    "infra:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "test": "pnpm --filter backend test"
   },
   "engines": {
     "node": ">=22"
