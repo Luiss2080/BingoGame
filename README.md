@@ -1,58 +1,165 @@
-# Bingo Imperial
+<div align="center">
+  <img src="docs/assets/logo.svg" width="96" alt="Logo de Bingo Imperial" />
+  <h1>Bingo Imperial</h1>
+  <p><b>Sistema de venta de cartones de bingo para equipos de vendedores: API NestJS, PWA en React y sincronización en tiempo real.</b></p>
+  <img src="https://img.shields.io/badge/estado-en_desarrollo-orange?style=for-the-badge" alt="Estado: en desarrollo" />
+  <img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS 11" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/Prisma-6-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma 6" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
+  <img src="https://img.shields.io/badge/pnpm-monorepo-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm monorepo" />
+  <p>
+    <a href="#-inicio-rápido">Inicio rápido</a> ·
+    <a href="#-características">Características</a> ·
+    <a href="#-arquitectura">Arquitectura</a> ·
+    <a href="#-pruebas">Pruebas</a> ·
+    <a href="#-lo-que-todavía-no-existe">Limitaciones</a>
+  </p>
+</div>
 
-Sistema de venta de cartones de bingo. Reescritura del sistema Android+Flask a un
-monorepo TypeScript con arquitectura escalable (~500 vendedores concurrentes).
+Bingo Imperial es la reescritura, como monorepo TypeScript, de un sistema anterior Android + Flask. Los administradores suben PDFs con cartones;
+los vendedores los **reservan, venden o liberan** desde una PWA, y los cambios se propagan a todos por WebSocket. **No es** un sistema terminado:
+el procesamiento de PDF actual es una prueba de concepto y el repositorio no incluye pruebas automatizadas.
 
-- **backend/** — API NestJS (HTTP), Prisma + PostgreSQL, cola BullMQ (producer)
-- **worker/** — Worker Python que procesa los PDFs fuera de la API (PyMuPDF+Pillow)
-- **frontend/** — PWA React (reemplaza la app Android; instalable desde el navegador)
-- **libs/common/** — Tipos y schemas Zod compartidos backend↔frontend
-- **docker/** — Compose de desarrollo y de producción (Coolify)
+## 🎬 Vista rápida
 
-Por qué esta arquitectura: en el sistema anterior el procesamiento de PDFs corría
-dentro del proceso web y colgaba el servidor. Aquí el worker corre en su propio
-contenedor y consume una cola: subir varios PDFs no afecta la latencia de la API.
+Sin capturas: la app necesita PostgreSQL, Redis y Ghostscript/GraphicsMagick (para `pdf2pic`) y no se levantó para este README. Flujo principal según el código:
 
-## Desarrollo local
+```text
+Admin     → sube un PDF (por partes) → la API lo encola (BullMQ) → se genera imagen de cartón
+Vendedor  → lista/busca cartones → toca uno (bloqueo temporal en Redis) → reserva / vende / libera
+Todos     → ven el cambio al instante (eventos Socket.IO: reservado, vendido, liberado, bloqueado)
+Admin     → dashboard, reportes Excel/PDF, auditoría, grupos, usuarios y permisos del rol vendedor
+```
 
-Requisitos: Node 22, pnpm 10, Python 3.12, Docker.
+## ✨ Características
+
+| Característica | Detalle |
+|---|---|
+| Cartones | Listado, búsqueda por número, detalle con imagen; estados `disponible`, `vendido`, `reservado`; vender/reservar/liberar con transacciones Prisma y borrado |
+| Tiempo real | `RealtimeGateway` (Socket.IO): evento `carton:tap` con bloqueo temporal en Redis (`SET NX EX`, liberación con script Lua) y difusión de cambios de estado |
+| PDFs | Subida en partes (`subir-pdf`, `pdf-parte`, `pdf-completar`), estados de procesamiento y cola BullMQ |
+| Usuarios y grupos | Roles `admin` y `vendedor`; grupos de vendedores; CRUD de usuarios y grupos |
+| Permisos configurables | Para el rol vendedor: `subir_pdf`, `vender`, `reservar`, `liberar` (editables por el admin) |
+| Autenticación | Login con JWT; verificación de hashes compatibles con Werkzeug (usuarios migrados de Flask) y argon2 para el resto |
+| Reportes y dashboard | Estadísticas, reporte en Excel y en PDF, gráficos (Recharts) |
+| Auditoría | Tabla `AuditLog` y pantalla de auditoría |
+| Banners | CRUD de banners con imagen |
+| PWA | `vite-plugin-pwa` (autoUpdate), manifiesto "Recorte Bingo", prompt de instalación |
+| Migración | `tools/migrate-sqlite`: importa la base SQLite anterior (usuarios, grupos, cartones, PDFs) y guía de corte |
+
+## 🏗️ Arquitectura
+
+```mermaid
+flowchart LR
+  subgraph FE["frontend (React 18 + Vite + Tailwind)"]
+    PG["pages/*"] --> ST["zustand + TanStack Query"]
+    RT["useRealtimeCartones (socket.io-client)"]
+  end
+  subgraph BE["backend (NestJS 11, prefijo /api)"]
+    CT["Controllers"] --> UC["core/application/use-cases"]
+    UC --> DOM["core/domain (entities, repositories)"]
+    UC --> PR["Prisma"]
+    GW["realtime/RealtimeGateway"] --> LK["LocksService (Redis)"]
+    Q["queue/PdfProcessor (BullMQ)"]
+  end
+  LIB["libs/common (Zod, permisos, contrato de jobs)"]
+  PGDB[("PostgreSQL")]
+  RD[("Redis")]
+  FE -- "HTTP /api" --> CT
+  RT <-- "WebSocket" --> GW
+  PR --> PGDB
+  Q --> RD
+  LK --> RD
+  Q --> PGDB
+  LIB -.-> FE
+  LIB -.-> BE
+```
+
+## 🚀 Inicio rápido
+
+| Requisito | Versión |
+|---|---|
+| Node.js | >= 22 (`engines`) |
+| pnpm | 10 (`packageManager`) |
+| Docker | para PostgreSQL 16 y Redis 7 de desarrollo |
+| Ghostscript + GraphicsMagick | los necesita `pdf2pic` para convertir PDFs |
 
 ```bash
 pnpm install
-pnpm infra:up                      # postgres + redis en Docker (puerto 5433)
+cp .env.example .env                 # completa DATABASE_URL, REDIS_URL, JWT_SECRET, DATA_DIR
+pnpm infra:up                        # postgres (puerto 5433) + redis (6379)
 pnpm --filter @bingo/common build
 pnpm --filter backend prisma:migrate
-pnpm --filter backend seed         # admin/admin1234 + permisos por defecto
+pnpm --filter backend seed           # admin inicial y permisos por defecto
 
-# 3 procesos (en terminales separadas):
-pnpm dev:api                       # API en http://localhost:4000
-pnpm dev:web                       # PWA en http://localhost:5180 (proxya /api)
-cd worker && python worker.py      # worker (usa DATABASE_URL/REDIS_URL del entorno)
+# en terminales separadas
+PORT=4000 pnpm dev:api               # el proxy de Vite apunta a http://localhost:4000
+pnpm dev:web                         # PWA en http://localhost:5180
 ```
 
-## Despliegue en Coolify
+> No verificado: estos comandos no se ejecutaron en esta revisión. El puerto por defecto de la API es 3000; el proxy de Vite espera 4000, por eso `PORT=4000`.
+> La contraseña del admin viene de `ADMIN_PASSWORD` (por defecto, un valor de desarrollo): cámbiala.
 
-1. Crea un recurso **Docker Compose** apuntando a `docker/docker-compose.prod.yml`.
-2. Configura estas variables de entorno (Coolify → Environment):
-   - `POSTGRES_PASSWORD` — contraseña de la base de datos (obligatoria)
-   - `JWT_SECRET` — secreto para firmar los tokens (obligatoria, larga y aleatoria)
-   - `ADMIN_PASSWORD` — contraseña del admin inicial (opcional, default `admin1234`)
-   - `POSTGRES_USER`, `POSTGRES_DB` — opcionales (default `bingo`)
-3. Expón **solo** el servicio `frontend` con tu dominio. nginx sirve la PWA y
-   proxya `/api` al contenedor `api` (un solo dominio, sin CORS).
-4. Al desplegar: la API aplica migraciones (`prisma migrate deploy`) y crea el
-   admin automáticamente en el primer arranque.
+<details>
+<summary>Variables de entorno (.env.example)</summary>
 
-El volumen `media` se comparte entre `api` y `worker` (PDFs subidos, imágenes de
-cartón, banners). Los volúmenes `pgdata`, `redisdata` y `media` persisten datos.
+| Variable | Uso |
+|---|---|
+| `DATABASE_URL` | Conexión PostgreSQL (Prisma) |
+| `REDIS_URL` | Redis para la cola |
+| `JWT_SECRET` | Obligatorio para firmar tokens (`getOrThrow`) |
+| `DATA_DIR` | Carpeta de PDFs, imágenes y banners |
+| `ADMIN_PASSWORD` | Contraseña del admin sembrado |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Solo `docker-compose.prod.yml` |
 
-### Escalar el procesamiento
+</details>
 
-Si el procesamiento de PDFs es un cuello de botella, aumenta las réplicas del
-servicio `worker` (cada una toma un PDF de la cola). Mantén **una sola** réplica
-de `api` para que las migraciones no compitan al desplegar.
+<details>
+<summary>Estructura de carpetas</summary>
 
-## Migración desde el sistema Flask
+```text
+backend/        NestJS: auth, cartones, pdfs, queue, realtime, grupos, users, permisos,
+                reportes, dashboard, audit, banners, storage; prisma/ (schema + migraciones + seed)
+  src/core/     Arquitectura limpia: domain (entities, repositories) y application/use-cases
+frontend/       PWA React: pages, components, hooks, stores, api
+libs/common/    Schemas Zod, permisos y contrato de jobs compartidos
+docker/         docker-compose.dev.yml y docker-compose.prod.yml (Coolify)
+tools/migrate-sqlite/   Migración desde el sistema Flask
+specs/ y spect/ y docs/ Specs 001–007, notas de arquitectura y constitución del proyecto
+```
 
-Ver `tools/migrate-sqlite/` para el script que importa la base SQLite anterior
-(usuarios, grupos, cartones, PDFs) preservando las contraseñas existentes.
+</details>
+
+<details>
+<summary>Despliegue (Coolify)</summary>
+
+`docker/docker-compose.prod.yml` define `postgres`, `redis`, `api`, `worker` y `frontend` (nginx sirve la PWA y hace proxy de `/api`). Variables obligatorias: `POSTGRES_PASSWORD` y `JWT_SECRET`. **Ojo:** el servicio `worker` construye desde `worker/`, carpeta que **no existe en este repositorio** (ver limitaciones), así que el compose de producción no construye tal cual.
+
+</details>
+
+## 🧪 Pruebas
+
+No hay pruebas automatizadas: no existen archivos `*.spec.ts`/`*.test.*` ni scripts `test` en los `package.json`, y no hay CI. La estrategia prevista está en `spect/testing.md` (documento de planificación).
+
+## 🔒 Seguridad
+
+- Login con JWT; `JWT_SECRET` es obligatorio al arrancar.
+- Guards de JWT y de permisos por rol; permisos del vendedor configurables.
+- Hashes de contraseña con argon2 y compatibilidad con hashes Werkzeug de la migración.
+- Bitácora de auditoría de acciones.
+- Puntos débiles: `enableCors({ origin: true })` y gateway con `cors: { origin: '*' }`; sin limitador de intentos de login visible en el código; la contraseña inicial del admin tiene un valor por defecto de desarrollo.
+
+## 🚧 Lo que todavía no existe
+
+- **Carpeta `worker/` (Python):** el README anterior y `docker-compose.prod.yml` la mencionan, pero está ignorada en `.gitignore` y no está en el repositorio. Hoy el procesamiento lo hace `queue/pdf.processor.ts` dentro de la API con `pdf2pic`.
+- El procesador convierte **solo la primera página** de cada PDF ("prueba de concepto" según el propio comentario del código); el recorte y armado completo del cartón no están.
+- Pruebas automatizadas y CI.
+- Los bloqueos Redis leen `REDIS_HOST`/`REDIS_PORT`, mientras `.env.example` define `REDIS_URL`: conviene unificarlo.
+- Sin archivo de licencia.
+
+## 📄 Licencia
+
+Sin licencia definida: todos los derechos reservados por defecto.
+
+<div align="center"><sub>Hecho por Luiss2080 · Bingo Imperial</sub></div>
