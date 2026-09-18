@@ -1,6 +1,8 @@
 name: bingo
 
 # Compose de producción para Coolify.
+# El procesamiento de PDFs corre dentro del servicio `api` (BullMQ + pdf2pic,
+# ver backend/src/queue/pdf.processor.ts); no hay servicio worker aparte.
 # Coolify inyecta las variables de entorno (ver .env.example); expón SOLO el
 # servicio `frontend` con un dominio — nginx proxya /api al contenedor api.
 
@@ -40,22 +42,6 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
       DATA_DIR: /data
       PORT: 3000
-    volumes:
-      - media:/data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-
-  worker:
-    build:
-      context: worker
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-bingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bingo}
-      REDIS_URL: redis://redis:6379
-      DATA_DIR: /data
     volumes:
       - media:/data
     depends_on:

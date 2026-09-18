@@ -134,7 +134,7 @@ specs/ y spect/ y docs/ Specs 001–007, notas de arquitectura y constitución d
 <details>
 <summary>Despliegue (Coolify)</summary>
 
-`docker/docker-compose.prod.yml` define `postgres`, `redis`, `api`, `worker` y `frontend` (nginx sirve la PWA y hace proxy de `/api`). Variables obligatorias: `POSTGRES_PASSWORD` y `JWT_SECRET`. **Ojo:** el servicio `worker` construye desde `worker/`, carpeta que **no existe en este repositorio** (ver limitaciones), así que el compose de producción no construye tal cual.
+`docker/docker-compose.prod.yml` define `postgres`, `redis`, `api` y `frontend` (nginx sirve la PWA y hace proxy de `/api`). Variables obligatorias: `POSTGRES_PASSWORD` y `JWT_SECRET`.
 
 </details>
 
@@ -152,7 +152,6 @@ specs/ y spect/ y docs/ Specs 001–007, notas de arquitectura y constitución d
 
 ## 🚧 Lo que todavía no existe
 
-- **Carpeta `worker/` (Python):** el README anterior y `docker-compose.prod.yml` la mencionan, pero está ignorada en `.gitignore` y no está en el repositorio. Hoy el procesamiento lo hace `queue/pdf.processor.ts` dentro de la API con `pdf2pic`.
 - El procesador convierte **solo la primera página** de cada PDF ("prueba de concepto" según el propio comentario del código); el recorte y armado completo del cartón no están.
 - Cobertura de pruebas más allá de la configuración de Redis, y CI.
 - Sin archivo de licencia.
