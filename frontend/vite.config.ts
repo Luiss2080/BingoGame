@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Puerto de la API: el mismo por defecto que backend/src/main.ts (3000), el
+// Dockerfile y nginx. Se puede sobrescribir con VITE_API_PORT.
+const apiTarget = `http://localhost:${process.env.VITE_API_PORT ?? 3000}`;
+
 export default defineConfig({
   plugins: [
     react(),
@@ -56,9 +60,9 @@ export default defineConfig({
   server: {
     port: 5180,
     proxy: {
-      '/api': 'http://localhost:4000',
+      '/api': apiTarget,
       '/socket.io': {
-        target: 'http://localhost:4000',
+        target: apiTarget,
         ws: true,
       },
     },

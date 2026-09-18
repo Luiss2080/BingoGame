@@ -94,11 +94,11 @@ pnpm --filter backend prisma:migrate
 pnpm --filter backend seed           # admin inicial y permisos por defecto
 
 # en terminales separadas
-PORT=4000 pnpm dev:api               # el proxy de Vite apunta a http://localhost:4000
+pnpm dev:api                         # API en http://localhost:3000 (el proxy de Vite apunta ahí; VITE_API_PORT lo cambia)
 pnpm dev:web                         # PWA en http://localhost:5180
 ```
 
-> No verificado: estos comandos no se ejecutaron en esta revisión. El puerto por defecto de la API es 3000; el proxy de Vite espera 4000, por eso `PORT=4000`.
+> No verificado: estos comandos no se ejecutaron en esta revisión. El puerto por defecto de la API es 3000 y el proxy de Vite ahora apunta a ese mismo puerto (si arrancas la API con otro `PORT`, define `VITE_API_PORT` con el mismo valor).
 > La contraseña del admin viene de `ADMIN_PASSWORD` (por defecto, un valor de desarrollo): cámbiala.
 
 <details>
