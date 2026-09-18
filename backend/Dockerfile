@@ -26,7 +26,7 @@ RUN cp -r backend/prisma /app/out/prisma \
 
 # ── runtime ──────────────────────────────────────────────────
 FROM node:22-slim AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ghostscript graphicsmagick \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production
