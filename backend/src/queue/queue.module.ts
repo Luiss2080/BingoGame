@@ -6,22 +6,16 @@ import { ExpressAdapter } from '@bull-board/express';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { PDF_QUEUE } from '@bingo/common';
 import { PdfProcessor } from './pdf.processor';
+import { resolveRedisConnection } from '../common/redis-connection';
 
 @Global()
 @Module({
   imports: [
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const url = new URL(config.get<string>('REDIS_URL', 'redis://localhost:6379'));
-        return {
-          connection: {
-            host: url.hostname,
-            port: Number(url.port || 6379),
-            password: url.password || undefined,
-          },
-        };
-      },
+      useFactory: (config: ConfigService) => ({
+        connection: resolveRedisConnection((k) => config.get<string>(k)),
+      }),
     }),
     BullModule.registerQueue({
       name: PDF_QUEUE,

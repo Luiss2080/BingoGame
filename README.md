@@ -107,7 +107,7 @@ pnpm dev:web                         # PWA en http://localhost:5180
 | Variable | Uso |
 |---|---|
 | `DATABASE_URL` | Conexión PostgreSQL (Prisma) |
-| `REDIS_URL` | Redis para la cola |
+| `REDIS_URL` | Redis para la cola y los bloqueos de cartones (`REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD` siguen aceptándose si `REDIS_URL` no está) |
 | `JWT_SECRET` | Obligatorio para firmar tokens (`getOrThrow`) |
 | `DATA_DIR` | Carpeta de PDFs, imágenes y banners |
 | `ADMIN_PASSWORD` | Contraseña del admin sembrado |
@@ -140,7 +140,7 @@ specs/ y spect/ y docs/ Specs 001–007, notas de arquitectura y constitución d
 
 ## 🧪 Pruebas
 
-No hay pruebas automatizadas: no existen archivos `*.spec.ts`/`*.test.*` ni scripts `test` en los `package.json`, y no hay CI. La estrategia prevista está en `spect/testing.md` (documento de planificación).
+`pnpm test` ejecuta Vitest en `backend/` (hoy solo cubre la resolución de la conexión Redis). No hay CI. La estrategia prevista está en `spect/testing.md` (documento de planificación).
 
 ## 🔒 Seguridad
 
@@ -154,8 +154,7 @@ No hay pruebas automatizadas: no existen archivos `*.spec.ts`/`*.test.*` ni scri
 
 - **Carpeta `worker/` (Python):** el README anterior y `docker-compose.prod.yml` la mencionan, pero está ignorada en `.gitignore` y no está en el repositorio. Hoy el procesamiento lo hace `queue/pdf.processor.ts` dentro de la API con `pdf2pic`.
 - El procesador convierte **solo la primera página** de cada PDF ("prueba de concepto" según el propio comentario del código); el recorte y armado completo del cartón no están.
-- Pruebas automatizadas y CI.
-- Los bloqueos Redis leen `REDIS_HOST`/`REDIS_PORT`, mientras `.env.example` define `REDIS_URL`: conviene unificarlo.
+- Cobertura de pruebas más allá de la configuración de Redis, y CI.
 - Sin archivo de licencia.
 
 ## 📄 Licencia

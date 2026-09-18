@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { ConfigService } from '@nestjs/config';
+import { resolveRedisConnection } from '../common/redis-connection';
 
 @Injectable()
 export class LocksService {
   private readonly redis: Redis;
 
   constructor(private readonly config: ConfigService) {
-    const host = this.config.get<string>('REDIS_HOST') || 'localhost';
-    const port = this.config.get<number>('REDIS_PORT') || 6379;
-    this.redis = new Redis({ host, port });
+    this.redis = new Redis(resolveRedisConnection((k) => this.config.get<string>(k)));
   }
 
   async acquireLock(key: string, owner: string, ttlSeconds: number): Promise<boolean> {
